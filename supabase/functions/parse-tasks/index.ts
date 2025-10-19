@@ -27,19 +27,22 @@ OUTPUT FORMAT - Return ONLY a flat array like this:
     "estimatedMinutes": 60,
     "category": "Fitness",
     "allowParallel": false,
-    "recurring": { "freq": "WEEKLY", "count": 12, "byDay": ["MO","WE","FR"] }
+    "recurring": { "freq": "WEEKLY", "count": 12, "byDay": ["MO","WE","FR"], "startWeekOffset": 0 },
+    "startTime": "17:00" // optional HH:mm local time suggestion
   }
 ]
 
 For RECURRING tasks:
-- freq: "DAILY" or "WEEKLY" 
+- freq: "DAILY" or "WEEKLY" or "MONTHLY"
 - count: number of occurrences
 - byDay: array like ["MO","TU","WE","TH","FR","SA","SU"]
+- startWeekOffset: optional integer to delay start by N weeks from the selected window start
+- startTime: optional HH:mm suggestion per task (use realistic varied times across the week)
 
-For GOAL-BASED inputs (like "train for half marathon"):
+For GOAL-BASED inputs (e.g., "train for half marathon", "read 10 books in 3 months"):
 - Create individual recurring tasks (e.g., "Easy Run", "Long Run", "Rest Day")
-- Spread across appropriate days with byDay
-- Use count to control duration
+- Spread across appropriate days with byDay and set helpful startTime values (e.g., Tue 17:00, Thu 08:00, Sat 09:00)
+- Use count to match the target period/duration
 
 Categories: Interviews, Applications, SPE, Study, Fitness, Errands, Content, Networking, Learning, Default
 
@@ -114,6 +117,7 @@ CRITICAL: Return ONLY a flat JSON array of tasks. No nesting, no wrapper objects
       allowParallel: task.allowParallel || false,
       notes: task.description || task.notes,
       recurring: task.recurring,
+      startTime: task.startTime, // optional HH:mm
     }));
 
     console.log('Parsed tasks:', tasksWithIds.length, 'tasks');

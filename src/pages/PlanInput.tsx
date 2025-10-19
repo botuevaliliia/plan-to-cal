@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { parseTasksFromText } from '@/utils/parser';
-import { scheduleTasks } from '@/utils/scheduler';
+import { scheduleTasksExpanded } from '@/utils/schedulerExpanded';
 import { usePlanStore } from '@/store/planStore';
 import { Calendar, Clock, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
@@ -52,7 +52,7 @@ const PlanInput = () => {
         timezone,
       };
       
-      const scheduledEvents = scheduleTasks(tasks, timeWindow);
+      const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow);
       
       setTasks(tasks);
       setEvents(scheduledEvents);
@@ -81,7 +81,7 @@ const PlanInput = () => {
           timezone,
         };
         
-        const scheduledEvents = scheduleTasks(tasks, timeWindow);
+        const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow);
         
         setTasks(tasks);
         setEvents(scheduledEvents);
