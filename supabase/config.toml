@@ -1,1 +1,4 @@
 project_id = "xjshzmoxxxvgkttwigsb"
+
+[functions.parse-tasks]
+verify_jwt = false

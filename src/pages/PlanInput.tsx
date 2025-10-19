@@ -22,7 +22,7 @@ const PlanInput = () => {
   const [workEnd, setWorkEnd] = useState('19:00');
   const [timezone] = useState('America/New_York');
   
-  const handleParse = () => {
+  const handleParse = async () => {
     if (!planText.trim()) {
       toast.error('Please enter your plan');
       return;
@@ -34,10 +34,12 @@ const PlanInput = () => {
     }
     
     try {
-      const tasks = parseTasksFromText(planText);
+      toast.loading('Parsing tasks with AI...');
+      
+      const tasks = await parseTasksFromText(planText, true);
       
       if (tasks.length === 0) {
-        toast.error('No tasks found. Make sure to use bullet points (-, —, *, •)');
+        toast.error('No tasks found. Please check your format.');
         return;
       }
       
@@ -58,7 +60,7 @@ const PlanInput = () => {
       navigate('/calendar');
     } catch (error) {
       console.error('Parse error:', error);
-      toast.error('Failed to parse plan. Please check your format.');
+      toast.error('Failed to parse plan. Please try again.');
     }
   };
   
@@ -86,7 +88,7 @@ const PlanInput = () => {
               Your Plan
             </CardTitle>
             <CardDescription>
-              Enter your tasks using bullet points (-, —, *, •). Include durations like "2h" or "45min"
+              Enter your tasks, one per line. No need for bullet points! Include durations like "2h" or "45min"
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -94,7 +96,7 @@ const PlanInput = () => {
               <Label htmlFor="plan-text">Task List</Label>
               <Textarea
                 id="plan-text"
-                placeholder="— Пройти YC курс 2h&#10;— Сделать маркет рисерч и сделать презентацию 3h&#10;— Построить MVP&#10;— Пойти бегать 45min&#10;— Mock interview 1h"
+                placeholder="Take a YC course&#10;Do market research and make a presentation&#10;Create an MVP&#10;Go designing&#10;Work out at home 45min&#10;Mock interview 1h"
                 className="min-h-[300px] mt-2 font-mono text-sm"
                 value={planText}
                 onChange={(e) => setPlanText(e.target.value)}
@@ -179,12 +181,12 @@ const PlanInput = () => {
           </CardHeader>
           <CardContent>
             <pre className="text-xs font-mono text-muted-foreground">
-{`— Complete YC course 2h
-— Market research and presentation 3h
-— Build MVP
-— Go for a run 45min
-— Mock interview 1h
-— Study Tableau documentation 1.5h`}
+{`Take a YC course 2h
+Do market research and presentation 3h
+Build MVP
+Go for a run 45min
+Mock interview 1h
+Study Tableau documentation 1.5h`}
             </pre>
           </CardContent>
         </Card>

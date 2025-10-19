@@ -1,15 +1,16 @@
 import { Task, TaskCategory } from '@/types/task';
+import { supabase } from '@/integrations/supabase/client';
 
 // Category keyword mappings
 const categoryKeywords: Record<TaskCategory, string[]> = {
   Interviews: ['интервью', 'interview', 'why google', 'tmay', 'pm eval', 'mock interview'],
-  Applications: ['податься', 'вакансий', 'linkedin', 'whoop', 'apply', 'application', 'job'],
-  SPE: ['spe', 'интегрировать', 'seo', 'тикток', 'looker', 'chartio', 'tableau', 'mvp'],
-  Study: ['прочитать', 'read', 'book', 'study', 'learn'],
-  Fitness: ['бег', 'накачаться', 'помыться', 'сон', 'workout', 'gym', 'exercise', 'fitness', 'run', 'sleep'],
-  Errands: ['вернуть', 'купить', 'тур', 'встреча', 'buy', 'purchase', 'return', 'errand'],
-  Content: ['content', 'write', 'post', 'blog', 'video'],
-  Networking: ['венчур кафе', 'network', 'coffee', 'meetup', 'venture cafe'],
+  Applications: ['податься', 'вакансій', 'linkedin', 'whoop', 'apply', 'application', 'job'],
+  SPE: ['spe', 'інтегрувати', 'seo', 'тікток', 'looker', 'chartio', 'tableau', 'mvp'],
+  Study: ['прочитати', 'read', 'book', 'study', 'learn'],
+  Fitness: ['біг', 'накачатися', 'помитися', 'сон', 'workout', 'gym', 'exercise', 'fitness', 'run', 'sleep'],
+  Errands: ['повернути', 'купити', 'тур', 'зустріч', 'buy', 'purchase', 'return', 'errand'],
+  Content: ['content', 'write', 'post', 'blog', 'video', 'journal'],
+  Networking: ['венчур кафе', 'network', 'coffee', 'meetup', 'venture cafe', 'club'],
   Learning: ['yc', 'курс', 'course', 'tutorial', 'documentation', 'docs'],
   Default: [],
 };
@@ -28,8 +29,8 @@ function detectCategory(text: string): TaskCategory {
 
 function parseDuration(text: string): number {
   // Match patterns like: 2h, 45min, 1.5hrs, etc.
-  const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|час|часа|часов)/i);
-  const minMatch = text.match(/(\d+)\s*(?:m|min|mins|мин|минут)/i);
+  const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|час|часа|часів)/i);
+  const minMatch = text.match(/(\d+)\s*(?:m|min|mins|мін|хвилин)/i);
   
   let minutes = 60; // default
   
@@ -48,25 +49,25 @@ function detectParallel(text: string): boolean {
   return parallelKeywords.some(keyword => lowerText.includes(keyword));
 }
 
-export function parseTasksFromText(text: string): Task[] {
+// Simple local parser
+function parseTasksLocally(text: string): Task[] {
   const lines = text.split('\n').filter(line => line.trim());
   const tasks: Task[] = [];
   
   for (const line of lines) {
     const trimmed = line.trim();
     
-    // Skip empty lines or lines that don't look like tasks
+    // Skip empty lines
     if (!trimmed || trimmed.length < 2) continue;
     
-    // Match lines starting with bullet points
-    const taskMatch = trimmed.match(/^[-—*•]\s*(.+)$/);
-    if (!taskMatch) continue;
+    // Remove leading bullets/dashes and trailing dashes
+    let taskText = trimmed.replace(/^[-—*•]\s*/, '').replace(/[-—]+$/, '').trim();
     
-    const taskText = taskMatch[1];
+    if (!taskText) continue;
     
     const task: Task = {
       id: crypto.randomUUID(),
-      title: taskText.replace(/\d+\s*(?:h|hr|hrs|час|часа|часов|m|min|mins|мин|минут)/gi, '').trim(),
+      title: taskText.replace(/\d+\s*(?:h|hr|hrs|час|часа|часів|m|min|mins|мін|хвилин)/gi, '').trim(),
       estimatedMinutes: parseDuration(taskText),
       allowParallel: detectParallel(taskText),
       category: detectCategory(taskText),
@@ -76,4 +77,41 @@ export function parseTasksFromText(text: string): Task[] {
   }
   
   return tasks;
+}
+
+// AI-powered parser using edge function
+async function parseTasksWithAI(text: string): Promise<Task[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke('parse-tasks', {
+      body: { text }
+    });
+    
+    if (error) throw error;
+    if (!data?.tasks) throw new Error('No tasks returned from AI');
+    
+    return data.tasks;
+  } catch (error) {
+    console.error('AI parsing failed:', error);
+    throw error;
+  }
+}
+
+export async function parseTasksFromText(text: string, useAI: boolean = true): Promise<Task[]> {
+  // Try AI first if enabled
+  if (useAI) {
+    try {
+      const aiTasks = await parseTasksWithAI(text);
+      if (aiTasks && aiTasks.length > 0) {
+        console.log('Parsed with AI:', aiTasks.length, 'tasks');
+        return aiTasks;
+      }
+    } catch (error) {
+      console.warn('AI parsing failed, falling back to local parser:', error);
+    }
+  }
+  
+  // Fallback to local parsing
+  const localTasks = parseTasksLocally(text);
+  console.log('Parsed locally:', localTasks.length, 'tasks');
+  return localTasks;
 }
