@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import rrulePlugin from '@fullcalendar/rrule';
 import { EventDropArg } from '@fullcalendar/core';
 import { DateTime } from 'luxon';
 import { usePlanStore } from '@/store/planStore';
@@ -59,19 +60,29 @@ const CalendarView = () => {
     }
   };
   
-  const calendarEvents = events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    start: event.startISO,
-    end: event.endISO,
-    backgroundColor: categoryColors[event.category],
-    borderColor: categoryColors[event.category],
-    extendedProps: {
-      category: event.category,
-      notes: event.notes,
-      allowParallel: event.allowParallel,
-    },
-  }));
+  const calendarEvents = events.map((event) => {
+    const calEvent: any = {
+      id: event.id,
+      title: event.title,
+      start: event.startISO,
+      end: event.endISO,
+      backgroundColor: categoryColors[event.category],
+      borderColor: categoryColors[event.category],
+      extendedProps: {
+        category: event.category,
+        notes: event.notes,
+        allowParallel: event.allowParallel,
+      },
+    };
+    
+    // Add rrule for recurring events
+    if (event.rrule) {
+      calEvent.rrule = event.rrule;
+      calEvent.duration = DateTime.fromISO(event.endISO).diff(DateTime.fromISO(event.startISO)).toMillis();
+    }
+    
+    return calEvent;
+  });
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
@@ -132,7 +143,7 @@ const CalendarView = () => {
             <Card className="p-6 shadow-lg border-0 bg-card/50 backdrop-blur">
               <FullCalendar
                 ref={calendarRef}
-                plugins={[timeGridPlugin, interactionPlugin]}
+                plugins={[timeGridPlugin, interactionPlugin, rrulePlugin]}
                 initialView="timeGridWeek"
                 headerToolbar={{
                   left: 'prev,next today',

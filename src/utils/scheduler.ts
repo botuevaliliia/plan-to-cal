@@ -49,6 +49,16 @@ export function scheduleTasks(
     
     const proposedEnd = proposedStart.plus({ minutes: task.estimatedMinutes });
     
+    // Generate RRULE if task is recurring
+    let rrule: string | undefined;
+    if (task.recurring) {
+      const { freq, count, byDay } = task.recurring;
+      const rruleParts = ['FREQ=' + freq];
+      if (count) rruleParts.push('COUNT=' + count);
+      if (byDay && byDay.length > 0) rruleParts.push('BYDAY=' + byDay.join(','));
+      rrule = rruleParts.join(';');
+    }
+    
     const event: ScheduledEvent = {
       id: task.id,
       title: task.title,
@@ -57,6 +67,7 @@ export function scheduleTasks(
       category: task.category,
       allowParallel: task.allowParallel,
       notes: task.notes,
+      rrule,
     };
     
     events.push(event);

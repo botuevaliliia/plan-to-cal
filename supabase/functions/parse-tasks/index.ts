@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,49 +16,59 @@ serve(async (req) => {
   try {
     const { text } = await req.json();
 
-    console.log('Parsing tasks with OpenAI:', text);
+    console.log('Parsing input:', text);
 
-    const systemPrompt = `You are a task parser. Extract tasks from plain text input and return structured JSON.
+    const systemPrompt = `You are an intelligent task and goal scheduler. You can handle two types of inputs:
 
-Each task should have:
-- title: string (the task description, cleaned up)
-- estimatedMinutes: number (default 60 if not specified, parse from patterns like "2h", "45min", "1.5hrs")
-- category: one of: Interviews, Applications, SPE, Study, Fitness, Errands, Content, Networking, Learning, Default
-- allowParallel: boolean (true if mentions "parallel", "simultaneously", "паралл", false otherwise)
+1. TASK LIST: Simple list of tasks to parse
+2. GOAL-BASED: A goal statement that needs a progressive schedule (e.g., "train for half marathon", "read 10 books in 3 months")
 
-Category mapping hints:
-- "interview", "интервью", "mock interview", "why google" → Interviews
-- "apply", "application", "вакансий", "linkedin", "податься" → Applications
-- "spe", "seo", "integrate", "mvp", "tableau", "looker" → SPE
-- "study", "read", "book", "прочитать", "курс", "course" → Study
-- "workout", "gym", "run", "fitness", "бег", "накачаться" → Fitness
-- "buy", "purchase", "errand", "купить", "вернуть" → Errands
-- "write", "content", "post", "journal" → Content
-- "network", "meetup", "club", "cafe", "венчур" → Networking
-- "yc", "learn", "documentation", "docs" → Learning
-- default → Default
+For TASK LIST inputs, extract each task with:
+- title: string (cleaned description)
+- estimatedMinutes: number (parse from "2h", "45min", or default 60)
+- category: Interviews, Applications, SPE, Study, Fitness, Errands, Content, Networking, Learning, Default
+- allowParallel: boolean (true if "parallel" mentioned)
 
-Return ONLY valid JSON array of tasks, no markdown, no explanation.`;
+For GOAL-BASED inputs, generate a PROGRESSIVE RECURRING SCHEDULE:
+- Break the goal into progressive steps (e.g., week 1: 5km, week 2: 7km, week 3: 10km)
+- Create recurring tasks with proper patterns
+- Use recurring field: { freq: "WEEKLY" or "DAILY", count: number, byDay: ["MO","TU","WE","TH","FR","SA","SU"] }
+- Make it realistic and progressive
+- Include rest days for fitness goals
+- Spread learning/reading goals across available time
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+Category hints:
+- "interview", "интервью" → Interviews
+- "apply", "вакансий", "linkedin" → Applications
+- "spe", "seo", "mvp" → SPE
+- "study", "read", "book", "прочитать" → Study
+- "workout", "gym", "run", "fitness", "бег" → Fitness
+- "buy", "errand", "купить" → Errands
+- "content", "write", "journal" → Content
+- "network", "club", "cafe" → Networking
+- "yc", "course", "learn" → Learning
+
+CRITICAL: Return ONLY valid JSON array. No markdown, no explanation.`;
+
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Parse these tasks:\n${text}` }
+          { role: 'user', content: text }
         ],
-        max_completion_tokens: 2000,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('AI API error:', response.status, errorText);
       return new Response(JSON.stringify({ error: 'Failed to parse with AI', details: errorText }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -68,7 +78,7 @@ Return ONLY valid JSON array of tasks, no markdown, no explanation.`;
     const data = await response.json();
     const content = data.choices[0].message.content;
     
-    console.log('OpenAI response:', content);
+    console.log('AI response:', content);
 
     // Parse the JSON from the response
     let tasks;

@@ -85,18 +85,18 @@ const PlanInput = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              Your Plan
+              Your Plan or Goal
             </CardTitle>
             <CardDescription>
-              Enter your tasks, one per line. No need for bullet points! Include durations like "2h" or "45min"
+              Enter tasks (one per line) OR describe a goal (like "train for half marathon in 3 months", "read 10 books by summer")
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <Label htmlFor="plan-text">Task List</Label>
+              <Label htmlFor="plan-text">Task List or Goal</Label>
               <Textarea
                 id="plan-text"
-                placeholder="Take a YC course&#10;Do market research and make a presentation&#10;Create an MVP&#10;Go designing&#10;Work out at home 45min&#10;Mock interview 1h"
+                placeholder="TASK LIST:&#10;Take a YC course&#10;Do market research and make a presentation&#10;Create an MVP&#10;&#10;OR GOAL:&#10;I'm preparing for a half marathon, I can currently run 13km at 10kmh, I have 3 months, give me a progressive schedule&#10;&#10;I want to read 10 books in 3 months, schedule this for me"
                 className="min-h-[300px] mt-2 font-mono text-sm"
                 value={planText}
                 onChange={(e) => setPlanText(e.target.value)}
@@ -177,17 +177,28 @@ const PlanInput = () => {
         {/* Example */}
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle className="text-sm">Example Format</CardTitle>
+            <CardTitle className="text-sm">Example Formats</CardTitle>
           </CardHeader>
-          <CardContent>
-            <pre className="text-xs font-mono text-muted-foreground">
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Task List:</p>
+              <pre className="text-xs font-mono text-muted-foreground">
 {`Take a YC course 2h
 Do market research and presentation 3h
 Build MVP
 Go for a run 45min
-Mock interview 1h
-Study Tableau documentation 1.5h`}
-            </pre>
+Mock interview 1h`}
+              </pre>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Goal-Based:</p>
+              <pre className="text-xs font-mono text-muted-foreground">
+{`I'm training for a half marathon. I can currently run 13km at 10-11 km/h. 
+I have 3 months. Please give me a progressive running schedule.
+
+I want to read 10 books in 3 months, schedule reading sessions for me.`}
+              </pre>
+            </div>
           </CardContent>
         </Card>
       </div>
