@@ -33,10 +33,12 @@ const PlanInput = () => {
       return;
     }
     
+    const toastId = toast.loading('Parsing tasks with AI...');
+    
     try {
-      toast.loading('Parsing tasks with AI...');
-      
       const tasks = await parseTasksFromText(planText, true);
+      
+      toast.dismiss(toastId);
       
       if (tasks.length === 0) {
         toast.error('No tasks found. Please check your format.');
@@ -59,8 +61,37 @@ const PlanInput = () => {
       toast.success(`Parsed ${tasks.length} tasks, scheduled ${scheduledEvents.length} events`);
       navigate('/calendar');
     } catch (error) {
+      toast.dismiss(toastId);
       console.error('Parse error:', error);
-      toast.error('Failed to parse plan. Please try again.');
+      toast.error('Failed to parse plan. Falling back to local parser...');
+      
+      // Immediate fallback to local parser
+      try {
+        const tasks = await parseTasksFromText(planText, false);
+        
+        if (tasks.length === 0) {
+          toast.error('No tasks found. Please check your format.');
+          return;
+        }
+        
+        const timeWindow = {
+          startISO: new Date(startDate).toISOString(),
+          endISO: new Date(endDate).toISOString(),
+          workHours: { start: workStart, end: workEnd },
+          timezone,
+        };
+        
+        const scheduledEvents = scheduleTasks(tasks, timeWindow);
+        
+        setTasks(tasks);
+        setEvents(scheduledEvents);
+        setTimeWindow(timeWindow);
+        
+        toast.success(`Parsed ${tasks.length} tasks locally`);
+        navigate('/calendar');
+      } catch (fallbackError) {
+        toast.error('Failed to parse plan even with local parser.');
+      }
     }
   };
   
