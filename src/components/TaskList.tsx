@@ -20,7 +20,7 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
       <CardHeader>
         <CardTitle className="text-sm font-semibold">Tasks</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <CardContent id="external-tasks" className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
         {tasks.map((task) => {
           const isScheduled = scheduledTaskIds.has(task.id);
           const event = events.find(e => e.id === task.id);
@@ -31,10 +31,15 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
               key={task.id}
               onClick={() => event && onSelectEvent(task.id)}
               className={cn(
-                "p-3 rounded-lg border transition-all cursor-pointer hover:shadow-md",
+                "p-3 rounded-lg border transition-all cursor-grab hover:shadow-md fc-task select-none",
                 isSelected ? "bg-accent border-accent-foreground/20 shadow-md" : "bg-background border-border",
                 !isScheduled && "opacity-60"
               )}
+              data-task-id={task.id}
+              data-title={task.title}
+              data-duration={task.estimatedMinutes}
+              data-category={task.category}
+              data-notes={task.notes || ''}
             >
               <div className="flex items-start gap-2">
                 <div className="mt-0.5">

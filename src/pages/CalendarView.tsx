@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { Draggable } from '@fullcalendar/interaction';
 import rrulePlugin from '@fullcalendar/rrule';
 import { EventDropArg } from '@fullcalendar/core';
 import { DateTime } from 'luxon';
@@ -18,14 +19,46 @@ import { toast } from 'sonner';
 const CalendarView = () => {
   const navigate = useNavigate();
   const calendarRef = useRef<FullCalendar>(null);
-  const { events, tasks, timeWindow, updateEvent } = usePlanStore();
+  const { events, tasks, timeWindow, updateEvent, setEvents } = usePlanStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const draggableInitRef = useRef(false);
   
   useEffect(() => {
     if (tasks.length === 0) {
       navigate('/');
     }
   }, [tasks, navigate]);
+  // Initialize external drag for tasks
+  useEffect(() => {
+    if (draggableInitRef.current) return;
+    const container = document.getElementById('external-tasks');
+    if (container) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const DraggableClass: any = Draggable;
+      if (DraggableClass) {
+        new DraggableClass(container, {
+          itemSelector: '.fc-task',
+          eventData: (el: HTMLElement) => {
+            const id = el.getAttribute('data-task-id') || '';
+            const title = el.getAttribute('data-title') || '';
+            const minutes = Number(el.getAttribute('data-duration')) || 30;
+            const category = el.getAttribute('data-category') || 'Default';
+            const notes = el.getAttribute('data-notes') || '';
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            const pad = (n: number) => String(n).padStart(2, '0');
+            return {
+              id,
+              title,
+              duration: `${pad(hours)}:${pad(mins)}:00`,
+              extendedProps: { category, notes },
+            };
+          },
+        });
+        draggableInitRef.current = true;
+      }
+    }
+  }, [tasks]);
   
   const handleEventDrop = (info: EventDropArg) => {
     const { event } = info;
@@ -43,6 +76,36 @@ const CalendarView = () => {
     
     updateEvent(event.id, { startISO, endISO });
     toast.success('Event duration updated');
+  };
+  
+  const handleEventReceive = (info: any) => {
+    const { event } = info;
+    const startISO = event.start?.toISOString() || '';
+    const endISO = event.end?.toISOString() || '';
+    const category = (event.extendedProps as any)?.category || 'Default';
+    const notes = (event.extendedProps as any)?.notes || '';
+
+    if (!startISO || !endISO) {
+      toast.error('Could not place the task. Try dropping into a timed slot.');
+      event.remove();
+      return;
+    }
+
+    const exists = events.some(e => e.id === event.id);
+    const newEvent = {
+      id: event.id,
+      title: event.title || 'Task',
+      startISO,
+      endISO,
+      category,
+      notes,
+    };
+    if (exists) {
+      updateEvent(event.id, newEvent);
+    } else {
+      setEvents([...events, newEvent]);
+    }
+    toast.success('Task scheduled');
   };
   
   const handleExportICS = () => {
@@ -145,6 +208,7 @@ const CalendarView = () => {
                 ref={calendarRef}
                 plugins={[timeGridPlugin, interactionPlugin, rrulePlugin]}
                 initialView="timeGridWeek"
+                initialDate={timeWindow?.startISO}
                 headerToolbar={{
                   left: 'prev,next today',
                   center: 'title',
@@ -158,6 +222,7 @@ const CalendarView = () => {
                 events={calendarEvents}
                 eventDrop={handleEventDrop}
                 eventResize={handleEventResize}
+                eventReceive={handleEventReceive}
                 eventClick={(info) => setSelectedEventId(info.event.id)}
                 height="auto"
                 nowIndicator={true}
