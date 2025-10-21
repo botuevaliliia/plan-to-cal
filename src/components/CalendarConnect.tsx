@@ -30,6 +30,8 @@ export const CalendarConnect = ({ onBusySlotsLoaded, onCalendarConnected, timeWi
 
     setLoading(true);
     try {
+      console.log('Fetching calendar events...', { url: icsUrl, timeWindow });
+      
       const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
         body: {
           type: 'ics',
@@ -39,19 +41,31 @@ export const CalendarConnect = ({ onBusySlotsLoaded, onCalendarConnected, timeWi
         },
       });
 
-      if (error) throw error;
+      console.log('Calendar fetch response:', { data, error });
 
-      const busySlots = data.events?.map((event: any) => ({
+      if (error) {
+        console.error('Calendar fetch error:', error);
+        throw error;
+      }
+
+      if (!data || !data.events) {
+        throw new Error('No events data received');
+      }
+
+      const busySlots = data.events.map((event: any) => ({
         start: event.start,
         end: event.end,
-      })) || [];
+      }));
+
+      console.log('Loaded busy slots:', busySlots);
 
       onBusySlotsLoaded(busySlots);
       onCalendarConnected({ type: 'ics', name: 'ICS Calendar', url: icsUrl });
-      toast.success(`Found ${busySlots.length} existing events`);
+      toast.success(`Found ${busySlots.length} existing events - tasks will be scheduled around them`);
     } catch (error) {
       console.error('ICS fetch error:', error);
-      toast.error('Failed to fetch calendar events');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch calendar events';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -21,6 +21,10 @@ function addBusy(busy: TimeSlot[], start: DateTime, minutes: number) {
   busy.push({ start, end: start.plus({ minutes }) });
 }
 
+function hasConflict(start: DateTime, end: DateTime, busySlots: TimeSlot[]): boolean {
+  return busySlots.some((slot) => start < slot.end && end > slot.start);
+}
+
 function findNextAvailableSlot(
   windowStart: DateTime,
   windowEnd: DateTime,
@@ -41,8 +45,7 @@ function findNextAvailableSlot(
       current = current.plus({ days: 1 }).set({ hour: startHour, minute: startMin, second: 0, millisecond: 0 });
       continue;
     }
-    const hasConflict = busySlots.some((slot) => current < slot.end && proposedEnd > slot.start);
-    if (!hasConflict) return current;
+    if (!hasConflict(current, proposedEnd, busySlots)) return current;
     const conflictingSlot = busySlots.find((slot) => current < slot.end && proposedEnd > slot.start);
     current = (conflictingSlot?.end || current).plus({ minutes: 15 });
   }
@@ -59,7 +62,11 @@ export function scheduleTasksExpanded(
   const windowStart = DateTime.fromISO(startISO, { zone: timezone });
   const windowEnd = DateTime.fromISO(endISO, { zone: timezone });
 
-  const scheduled: TimeSlot[] = [...busySlots];
+  // Convert busySlots to DateTime objects
+  const scheduled: TimeSlot[] = busySlots.map(slot => ({
+    start: DateTime.fromISO(slot.start as any, { zone: timezone }),
+    end: DateTime.fromISO(slot.end as any, { zone: timezone })
+  }));
 
   for (const task of tasks) {
     const startTime: string | undefined = (task as any)?.startTime;
@@ -97,16 +104,19 @@ export function scheduleTasksExpanded(
           const candidate = toStartOfDay(base.plus({ days: occurrences }), startTime || workHours?.start, workHours?.start || '09:00');
           if (candidate >= windowStart && candidate < windowEnd) {
             const end = candidate.plus({ minutes: task.estimatedMinutes });
-            events.push({
-              id: `${task.id}-${occurrences + 1}`,
-              title: task.title,
-              startISO: candidate.toISO() || '',
-              endISO: end.toISO() || '',
-              category: task.category,
-              allowParallel: task.allowParallel,
-              notes: task.notes,
-            });
-            if (!task.allowParallel) addBusy(scheduled, candidate, task.estimatedMinutes);
+            // Check for conflicts with existing busy slots
+            if (!hasConflict(candidate, end, scheduled)) {
+              events.push({
+                id: `${task.id}-${occurrences + 1}`,
+                title: task.title,
+                startISO: candidate.toISO() || '',
+                endISO: end.toISO() || '',
+                category: task.category,
+                allowParallel: task.allowParallel,
+                notes: task.notes,
+              });
+              if (!task.allowParallel) addBusy(scheduled, candidate, task.estimatedMinutes);
+            }
           }
           occurrences++;
         } else if (freq === 'WEEKLY') {
@@ -119,16 +129,19 @@ export function scheduleTasksExpanded(
             if (candidate < windowStart) continue;
             if (candidate >= windowEnd) { occurrences = count; break; }
             const end = candidate.plus({ minutes: task.estimatedMinutes });
-            events.push({
-              id: `${task.id}-${occurrences + 1}`,
-              title: task.title,
-              startISO: candidate.toISO() || '',
-              endISO: end.toISO() || '',
-              category: task.category,
-              allowParallel: task.allowParallel,
-              notes: task.notes,
-            });
-            if (!task.allowParallel) addBusy(scheduled, candidate, task.estimatedMinutes);
+            // Check for conflicts with existing busy slots
+            if (!hasConflict(candidate, end, scheduled)) {
+              events.push({
+                id: `${task.id}-${occurrences + 1}`,
+                title: task.title,
+                startISO: candidate.toISO() || '',
+                endISO: end.toISO() || '',
+                category: task.category,
+                allowParallel: task.allowParallel,
+                notes: task.notes,
+              });
+              if (!task.allowParallel) addBusy(scheduled, candidate, task.estimatedMinutes);
+            }
             occurrences++;
           }
           weekCursor = weekCursor.plus({ weeks: 1 });
@@ -137,16 +150,19 @@ export function scheduleTasksExpanded(
           candidate = toStartOfDay(candidate, startTime || workHours?.start, workHours?.start || '09:00');
           if (candidate >= windowStart && candidate < windowEnd) {
             const end = candidate.plus({ minutes: task.estimatedMinutes });
-            events.push({
-              id: `${task.id}-${occurrences + 1}`,
-              title: task.title,
-              startISO: candidate.toISO() || '',
-              endISO: end.toISO() || '',
-              category: task.category,
-              allowParallel: task.allowParallel,
-              notes: task.notes,
-            });
-            if (!task.allowParallel) addBusy(scheduled, candidate, task.estimatedMinutes);
+            // Check for conflicts with existing busy slots
+            if (!hasConflict(candidate, end, scheduled)) {
+              events.push({
+                id: `${task.id}-${occurrences + 1}`,
+                title: task.title,
+                startISO: candidate.toISO() || '',
+                endISO: end.toISO() || '',
+                category: task.category,
+                allowParallel: task.allowParallel,
+                notes: task.notes,
+              });
+              if (!task.allowParallel) addBusy(scheduled, candidate, task.estimatedMinutes);
+            }
           }
           occurrences++;
         } else {
