@@ -61,3 +61,8 @@ export interface Conflict {
   reason: 'overlap-busy' | 'outside-window' | 'invalid-duration';
   suggestions?: ScheduledEvent[];
 }
+
+export interface TimeSlot {
+  start: string; // ISO string
+  end: string;   // ISO string
+}

@@ -10,10 +10,12 @@ import { scheduleTasksExpanded } from '@/utils/schedulerExpanded';
 import { usePlanStore } from '@/store/planStore';
 import { Calendar, Clock, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { CalendarConnect } from '@/components/CalendarConnect';
+import { DateTime } from 'luxon';
 
 const PlanInput = () => {
   const navigate = useNavigate();
-  const { setTasks, setEvents, setTimeWindow } = usePlanStore();
+  const { setTasks, setEvents, setTimeWindow, setBusySlots, setConnectedCalendar, busySlots } = usePlanStore();
   
   const [planText, setPlanText] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -52,7 +54,7 @@ const PlanInput = () => {
         timezone,
       };
       
-      const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow);
+      const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow, busySlots);
       
       setTasks(tasks);
       setEvents(scheduledEvents);
@@ -81,7 +83,7 @@ const PlanInput = () => {
           timezone,
         };
         
-        const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow);
+        const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow, busySlots);
         
         setTasks(tasks);
         setEvents(scheduledEvents);
@@ -193,6 +195,24 @@ const PlanInput = () => {
                 />
               </div>
             </div>
+
+            <CalendarConnect
+              onBusySlotsLoaded={(slots) => {
+                setBusySlots(slots);
+                toast.info(`Loaded ${slots.length} busy slots`);
+              }}
+              onCalendarConnected={(calendar) => {
+                setConnectedCalendar(calendar);
+              }}
+              timeWindow={
+                startDate && endDate
+                  ? {
+                      startISO: DateTime.fromISO(startDate).startOf('day').toISO() || '',
+                      endISO: DateTime.fromISO(endDate).endOf('day').toISO() || '',
+                    }
+                  : null
+              }
+            />
 
             <Button
               onClick={handleParse}

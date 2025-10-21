@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 const CalendarView = () => {
   const navigate = useNavigate();
   const calendarRef = useRef<FullCalendar>(null);
-  const { events, tasks, timeWindow, updateEvent, setEvents } = usePlanStore();
+  const { events, tasks, timeWindow, updateEvent, setEvents, busySlots, connectedCalendar } = usePlanStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const draggableInitRef = useRef(false);
   
@@ -123,29 +123,44 @@ const CalendarView = () => {
     }
   };
   
-  const calendarEvents = events.map((event) => {
-    const calEvent: any = {
-      id: event.id,
-      title: event.title,
-      start: event.startISO,
-      end: event.endISO,
-      backgroundColor: categoryColors[event.category],
-      borderColor: categoryColors[event.category],
+  const calendarEvents = [
+    ...events.map((event) => {
+      const calEvent: any = {
+        id: event.id,
+        title: event.title,
+        start: event.startISO,
+        end: event.endISO,
+        backgroundColor: categoryColors[event.category],
+        borderColor: categoryColors[event.category],
+        extendedProps: {
+          category: event.category,
+          notes: event.notes,
+          allowParallel: event.allowParallel,
+        },
+      };
+      
+      // Add rrule for recurring events
+      if (event.rrule) {
+        calEvent.rrule = event.rrule;
+        calEvent.duration = DateTime.fromISO(event.endISO).diff(DateTime.fromISO(event.startISO)).toMillis();
+      }
+      
+      return calEvent;
+    }),
+    // Add busy slots from connected calendar
+    ...busySlots.map((slot, idx) => ({
+      id: `busy-${idx}`,
+      title: '🔒 Busy',
+      start: slot.start,
+      end: slot.end,
+      backgroundColor: 'rgba(239, 68, 68, 0.2)',
+      borderColor: 'rgb(239, 68, 68)',
+      editable: false,
       extendedProps: {
-        category: event.category,
-        notes: event.notes,
-        allowParallel: event.allowParallel,
+        isBusySlot: true,
       },
-    };
-    
-    // Add rrule for recurring events
-    if (event.rrule) {
-      calEvent.rrule = event.rrule;
-      calEvent.duration = DateTime.fromISO(event.endISO).diff(DateTime.fromISO(event.startISO)).toMillis();
-    }
-    
-    return calEvent;
-  });
+    })),
+  ];
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
@@ -170,6 +185,7 @@ const CalendarView = () => {
                   <h1 className="text-xl font-bold">Your Schedule</h1>
                   <p className="text-sm text-muted-foreground">
                     {events.length} events scheduled
+                    {connectedCalendar && ` • ${busySlots.length} busy slots from ${connectedCalendar.name}`}
                   </p>
                 </div>
               </div>
