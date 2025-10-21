@@ -61,7 +61,7 @@ export const CalendarConnect = ({ onBusySlotsLoaded, onCalendarConnected, timeWi
 
       onBusySlotsLoaded(busySlots);
       onCalendarConnected({ type: 'ics', name: 'ICS Calendar', url: icsUrl });
-      toast.success(`Found ${busySlots.length} existing events - tasks will be scheduled around them`);
+      toast.success(`Connected! Found ${busySlots.length} existing events - they'll appear as grey blocks when you schedule`);
     } catch (error) {
       console.error('ICS fetch error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch calendar events';

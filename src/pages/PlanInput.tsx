@@ -54,6 +54,7 @@ const PlanInput = () => {
         timezone,
       };
       
+      console.log('Scheduling with busy slots:', busySlots.length);
       const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow, busySlots);
       
       setTasks(tasks);
@@ -198,8 +199,9 @@ const PlanInput = () => {
 
             <CalendarConnect
               onBusySlotsLoaded={(slots) => {
+                console.log('Setting busy slots in store:', slots.length);
                 setBusySlots(slots);
-                toast.info(`Loaded ${slots.length} busy slots`);
+                toast.info(`Loaded ${slots.length} busy time slots from your calendar`);
               }}
               onCalendarConnected={(calendar) => {
                 setConnectedCalendar(calendar);

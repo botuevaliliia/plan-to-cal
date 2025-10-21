@@ -123,6 +123,8 @@ const CalendarView = () => {
     }
   };
   
+  console.log('Calendar rendering with busySlots:', busySlots.length);
+  
   const calendarEvents = [
     ...events.map((event) => {
       const calEvent: any = {
