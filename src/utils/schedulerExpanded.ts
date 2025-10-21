@@ -174,8 +174,12 @@ export function scheduleTasksExpanded(
 
     // One-time task: find earliest slot
     const start = findNextAvailableSlot(windowStart, windowEnd, task.estimatedMinutes, scheduled, workHours);
-    if (!start) continue;
+    if (!start) {
+      console.warn(`Could not schedule task: ${task.title} (${task.estimatedMinutes} minutes) - no available slots`);
+      continue;
+    }
     const end = start.plus({ minutes: task.estimatedMinutes });
+    console.log(`Scheduled task: ${task.title} from ${start.toISO()} to ${end.toISO()}`);
     events.push({
       id: task.id,
       title: task.title,

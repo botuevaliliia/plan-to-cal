@@ -80,6 +80,16 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Busy slot styling */
+  .busy-slot {
+    opacity: 0.7;
+    font-style: italic;
+  }
+  
+  .busy-slot .fc-event-title {
+    font-size: 0.75rem;
+  }
+
   .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;

@@ -147,15 +147,18 @@ const CalendarView = () => {
       
       return calEvent;
     }),
-    // Add busy slots from connected calendar
+    // Add busy slots from connected calendar as read-only events
     ...busySlots.map((slot, idx) => ({
       id: `busy-${idx}`,
-      title: '🔒 Busy',
+      title: 'Busy Time',
       start: slot.start,
       end: slot.end,
-      backgroundColor: 'rgba(239, 68, 68, 0.2)',
-      borderColor: 'rgb(239, 68, 68)',
+      backgroundColor: 'rgba(156, 163, 175, 0.3)', // Gray background
+      borderColor: 'rgba(156, 163, 175, 0.8)',
+      textColor: 'rgba(75, 85, 99, 1)',
       editable: false,
+      display: 'block',
+      classNames: ['busy-slot'],
       extendedProps: {
         isBusySlot: true,
       },
