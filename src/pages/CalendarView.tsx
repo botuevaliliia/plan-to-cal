@@ -20,7 +20,18 @@ import { toast } from 'sonner';
 const CalendarView = () => {
   const navigate = useNavigate();
   const calendarRef = useRef<FullCalendar>(null);
-  const { events, tasks, timeWindow, updateEvent, setEvents, busySlots, connectedCalendar, conflicts } = usePlanStore();
+  const { 
+    events, 
+    tasks, 
+    timeWindow, 
+    updateEvent, 
+    setEvents, 
+    busySlots, 
+    connectedCalendar, 
+    conflicts,
+    setTimeWindow,
+    setConflicts,
+  } = usePlanStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const draggableInitRef = useRef(false);
   
@@ -121,6 +132,30 @@ const CalendarView = () => {
     } catch (error) {
       console.error('Export error:', error);
       toast.error('Failed to export calendar');
+    }
+  };
+
+  const handleReschedule = () => {
+    if (!timeWindow) {
+      toast.error('No time window set');
+      return;
+    }
+
+    try {
+      const { scheduleTasksExpanded } = require('@/utils/schedulerExpanded');
+      const { events: newEvents, conflicts: newConflicts } = scheduleTasksExpanded(
+        tasks,
+        timeWindow,
+        busySlots
+      );
+      
+      setEvents(newEvents);
+      setConflicts(newConflicts);
+      
+      toast.success(`Rescheduled ${newEvents.length} events${newConflicts.length > 0 ? ` (${newConflicts.length} conflicts remain)` : ''}`);
+    } catch (error) {
+      console.error('Reschedule error:', error);
+      toast.error('Failed to reschedule tasks');
     }
   };
   
@@ -226,8 +261,13 @@ const CalendarView = () => {
           {/* Calendar */}
           <div className="lg:col-span-3 space-y-4">
             {/* Conflict Warnings */}
-            {conflicts && conflicts.length > 0 && (
-              <ConflictWarnings conflicts={conflicts} />
+            {conflicts && conflicts.length > 0 && timeWindow && (
+              <ConflictWarnings 
+                conflicts={conflicts} 
+                timeWindow={timeWindow}
+                onTimeWindowUpdate={setTimeWindow}
+                onReschedule={handleReschedule}
+              />
             )}
             
             <Card className="p-6 shadow-lg border-0 bg-card/50 backdrop-blur">
