@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, RefreshCw } from 'lucide-react';
 import { TimeWindow } from '@/types/task';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface TimeWindowEditorProps {
   timeWindow: TimeWindow;
@@ -24,13 +24,23 @@ export const TimeWindowEditor = ({ timeWindow, onUpdate, onReschedule }: TimeWin
   const [workEnd, setWorkEnd] = useState(timeWindow.workHours?.end || '18:00');
 
   const handleApply = () => {
+    console.log('Apply button clicked', { startDate, endDate, workStart, workEnd });
+    
     if (!startDate || !endDate) {
-      toast.error('Please set both start and end dates');
+      toast({
+        title: "Missing dates",
+        description: "Please set both start and end dates",
+        variant: "destructive",
+      });
       return;
     }
 
     if (new Date(startDate) > new Date(endDate)) {
-      toast.error('Start date must be before end date');
+      toast({
+        title: "Invalid date range",
+        description: "Start date must be before end date",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -41,8 +51,13 @@ export const TimeWindowEditor = ({ timeWindow, onUpdate, onReschedule }: TimeWin
       timezone: timeWindow.timezone,
     };
 
+    console.log('Updating time window:', updated);
     onUpdate(updated);
-    toast.success('Time window updated');
+    
+    toast({
+      title: "Time window updated",
+      description: "Click 'Apply & Reschedule' to update your schedule with the new time range",
+    });
   };
 
   return (
@@ -111,19 +126,12 @@ export const TimeWindowEditor = ({ timeWindow, onUpdate, onReschedule }: TimeWin
 
         <div className="flex gap-2 pt-2">
           <Button
-            onClick={handleApply}
-            size="sm"
-            className="flex-1 h-8 text-xs"
-          >
-            Apply Changes
-          </Button>
-          <Button
             onClick={() => {
+              console.log('Apply & Reschedule clicked');
               handleApply();
-              setTimeout(onReschedule, 100);
+              setTimeout(onReschedule, 200);
             }}
             size="sm"
-            variant="outline"
             className="flex-1 h-8 text-xs"
           >
             <RefreshCw className="w-3 h-3 mr-1" />
