@@ -15,7 +15,9 @@ import { generateICS, downloadICS } from '@/utils/icsExport';
 import { Calendar, Download, ArrowLeft, FileText } from 'lucide-react';
 import { TaskList } from '@/components/TaskList';
 import { ConflictWarnings } from '@/components/ConflictWarnings';
+import { CalendarConnect } from '@/components/CalendarConnect';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const CalendarView = () => {
   const navigate = useNavigate();
@@ -31,6 +33,8 @@ const CalendarView = () => {
     conflicts,
     setTimeWindow,
     setConflicts,
+    setBusySlots,
+    setConnectedCalendar,
   } = usePlanStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const draggableInitRef = useRef(false);
@@ -71,6 +75,37 @@ const CalendarView = () => {
       }
     }
   }, [tasks]);
+  
+  // Auto-refresh connected ICS calendar busy slots when time window or calendar URL changes
+  useEffect(() => {
+    const fetchBusyFromICS = async () => {
+      try {
+        if (!timeWindow || !connectedCalendar || connectedCalendar.type !== 'ics' || !connectedCalendar.url) return;
+        console.log('Auto-fetching ICS busy slots...', { url: connectedCalendar.url, timeWindow });
+        const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
+          body: {
+            type: 'ics',
+            url: connectedCalendar.url,
+            timeMin: timeWindow.startISO,
+            timeMax: timeWindow.endISO,
+          },
+        });
+        if (error) throw error;
+        if (!data || !data.events) return;
+        const slots = data.events.map((event: any) => ({
+          start: event.start,
+          end: event.end,
+          title: event.summary,
+        }));
+        setBusySlots(slots);
+        console.log('ICS busy slots updated:', slots.length);
+      } catch (err) {
+        console.error('Failed to auto-fetch ICS events:', err);
+        toast.error('Failed to refresh connected calendar');
+      }
+    };
+    fetchBusyFromICS();
+  }, [connectedCalendar?.url, timeWindow?.startISO, timeWindow?.endISO]);
   
   const handleEventDrop = (info: EventDropArg) => {
     const { event } = info;
@@ -249,12 +284,25 @@ const CalendarView = () => {
       <div className="container mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar - Task List */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-4">
             <TaskList
               tasks={tasks}
               events={events}
               selectedEventId={selectedEventId}
               onSelectEvent={setSelectedEventId}
+            />
+
+            {/* Connect Calendar (ICS) */}
+            <CalendarConnect
+              onBusySlotsLoaded={(slots) => {
+                setBusySlots(slots);
+                toast.success(`Imported ${slots.length} events from your calendar`);
+              }}
+              onCalendarConnected={(calendar) => {
+                setConnectedCalendar(calendar);
+                toast.info(`Connected to ${calendar.name}`);
+              }}
+              timeWindow={timeWindow ? { startISO: timeWindow.startISO, endISO: timeWindow.endISO } : null}
             />
           </div>
 
