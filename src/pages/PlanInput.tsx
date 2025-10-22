@@ -48,8 +48,8 @@ const PlanInput = () => {
       }
       
       const timeWindow = {
-        startISO: new Date(startDate).toISOString(),
-        endISO: new Date(endDate).toISOString(),
+        startISO: DateTime.fromISO(startDate).startOf('day').toISO() || '',
+        endISO: DateTime.fromISO(endDate).endOf('day').toISO() || '',
         workHours: { start: workStart, end: workEnd },
         timezone,
       };
@@ -79,8 +79,8 @@ const PlanInput = () => {
         }
         
         const timeWindow = {
-          startISO: new Date(startDate).toISOString(),
-          endISO: new Date(endDate).toISOString(),
+          startISO: DateTime.fromISO(startDate).startOf('day').toISO() || '',
+          endISO: DateTime.fromISO(endDate).endOf('day').toISO() || '',
           workHours: { start: workStart, end: workEnd },
           timezone,
         };
