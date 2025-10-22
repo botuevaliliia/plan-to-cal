@@ -188,7 +188,7 @@ const CalendarView = () => {
     // Add busy slots from connected calendar as read-only events
     ...busySlots.map((slot, idx) => ({
       id: `busy-${idx}`,
-      title: '🔒 Busy',
+      title: slot.title ? `📅 ${slot.title}` : '🔒 Busy',
       start: slot.start,
       end: slot.end,
       backgroundColor: 'rgba(107, 114, 128, 0.5)',

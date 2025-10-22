@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CalendarConnectProps {
-  onBusySlotsLoaded: (slots: Array<{ start: string; end: string }>) => void;
+  onBusySlotsLoaded: (slots: Array<{ start: string; end: string; title?: string }>) => void;
   onCalendarConnected: (calendar: { type: 'google' | 'microsoft' | 'ics'; name: string; url?: string }) => void;
   timeWindow: { startISO: string; endISO: string } | null;
 }
@@ -55,6 +55,7 @@ export const CalendarConnect = ({ onBusySlotsLoaded, onCalendarConnected, timeWi
       const busySlots = data.events.map((event: any) => ({
         start: event.start,
         end: event.end,
+        title: event.summary,
       }));
 
       console.log('Loaded busy slots:', busySlots);

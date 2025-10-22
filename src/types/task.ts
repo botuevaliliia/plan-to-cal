@@ -66,4 +66,5 @@ export interface Conflict {
 export interface TimeSlot {
   start: string; // ISO string
   end: string;   // ISO string
+  title?: string; // Optional summary/title from connected calendar
 }
