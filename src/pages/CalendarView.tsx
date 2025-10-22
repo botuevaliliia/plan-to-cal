@@ -14,12 +14,13 @@ import { categoryColors } from '@/utils/categoryColors';
 import { generateICS, downloadICS } from '@/utils/icsExport';
 import { Calendar, Download, ArrowLeft, FileText } from 'lucide-react';
 import { TaskList } from '@/components/TaskList';
+import { ConflictWarnings } from '@/components/ConflictWarnings';
 import { toast } from 'sonner';
 
 const CalendarView = () => {
   const navigate = useNavigate();
   const calendarRef = useRef<FullCalendar>(null);
-  const { events, tasks, timeWindow, updateEvent, setEvents, busySlots, connectedCalendar } = usePlanStore();
+  const { events, tasks, timeWindow, updateEvent, setEvents, busySlots, connectedCalendar, conflicts } = usePlanStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const draggableInitRef = useRef(false);
   
@@ -152,15 +153,15 @@ const CalendarView = () => {
     // Add busy slots from connected calendar as read-only events
     ...busySlots.map((slot, idx) => ({
       id: `busy-${idx}`,
-      title: 'Busy Time',
+      title: '🔒 Busy',
       start: slot.start,
       end: slot.end,
-      backgroundColor: 'rgba(156, 163, 175, 0.3)', // Gray background
-      borderColor: 'rgba(156, 163, 175, 0.8)',
-      textColor: 'rgba(75, 85, 99, 1)',
+      backgroundColor: 'rgba(107, 114, 128, 0.5)',
+      borderColor: 'rgba(107, 114, 128, 0.9)',
+      textColor: 'rgba(55, 65, 81, 1)',
       editable: false,
       display: 'block',
-      classNames: ['busy-slot'],
+      classNames: ['busy-slot-highlight'],
       extendedProps: {
         isBusySlot: true,
       },
@@ -223,7 +224,12 @@ const CalendarView = () => {
           </div>
 
           {/* Calendar */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 space-y-4">
+            {/* Conflict Warnings */}
+            {conflicts && conflicts.length > 0 && (
+              <ConflictWarnings conflicts={conflicts} />
+            )}
+            
             <Card className="p-6 shadow-lg border-0 bg-card/50 backdrop-blur">
               <FullCalendar
                 ref={calendarRef}
@@ -249,6 +255,11 @@ const CalendarView = () => {
                 nowIndicator={true}
                 slotDuration="00:30:00"
                 snapDuration="00:15:00"
+                businessHours={{
+                  daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+                  startTime: timeWindow?.workHours?.start || '09:00',
+                  endTime: timeWindow?.workHours?.end || '18:00',
+                }}
               />
             </Card>
           </div>

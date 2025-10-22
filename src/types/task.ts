@@ -28,6 +28,7 @@ export interface Task {
   allowParallel: boolean;
   recurring?: RecurringPattern;
   category: TaskCategory;
+  priority?: 'low' | 'medium' | 'high';
 }
 
 export interface TimeWindow {

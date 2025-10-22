@@ -56,8 +56,9 @@ export function scheduleTasksExpanded(
   tasks: Task[],
   timeWindow: TimeWindow,
   busySlots: TimeSlot[] = []
-): ScheduledEvent[] {
+): { events: ScheduledEvent[]; conflicts: Array<{ taskTitle: string; reason: string; suggestedTime?: string }> } {
   const events: ScheduledEvent[] = [];
+  const conflicts: Array<{ taskTitle: string; reason: string; suggestedTime?: string }> = [];
   const { startISO, endISO, workHours, timezone } = timeWindow;
   const windowStart = DateTime.fromISO(startISO, { zone: timezone });
   const windowEnd = DateTime.fromISO(endISO, { zone: timezone });
@@ -68,7 +69,20 @@ export function scheduleTasksExpanded(
     end: DateTime.fromISO(slot.end as any, { zone: timezone })
   }));
 
-  for (const task of tasks) {
+  // Sort tasks by priority (high -> medium -> low) and fixedStart first
+  const sortedTasks = [...tasks].sort((a, b) => {
+    // Fixed start tasks always come first
+    if (a.fixedStart && !b.fixedStart) return -1;
+    if (!a.fixedStart && b.fixedStart) return 1;
+    
+    // Then by priority
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    const aPriority = priorityOrder[a.priority || 'medium'];
+    const bPriority = priorityOrder[b.priority || 'medium'];
+    return aPriority - bPriority;
+  });
+
+  for (const task of sortedTasks) {
     const startTime: string | undefined = (task as any)?.startTime;
 
     if (task.fixedStart) {
@@ -175,6 +189,12 @@ export function scheduleTasksExpanded(
     // One-time task: find earliest slot
     const start = findNextAvailableSlot(windowStart, windowEnd, task.estimatedMinutes, scheduled, workHours);
     if (!start) {
+      const suggestedTime = windowEnd.plus({ days: 1 }).toFormat('yyyy-MM-dd HH:mm');
+      conflicts.push({
+        taskTitle: task.title,
+        reason: `No available ${task.estimatedMinutes}-minute slot within work hours (${workHours?.start || '09:00'} - ${workHours?.end || '18:00'})`,
+        suggestedTime,
+      });
       console.warn(`Could not schedule task: ${task.title} (${task.estimatedMinutes} minutes) - no available slots`);
       continue;
     }
@@ -192,5 +212,5 @@ export function scheduleTasksExpanded(
     if (!task.allowParallel) addBusy(scheduled, start, task.estimatedMinutes);
   }
 
-  return events;
+  return { events, conflicts };
 }

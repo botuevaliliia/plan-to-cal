@@ -15,7 +15,7 @@ import { DateTime } from 'luxon';
 
 const PlanInput = () => {
   const navigate = useNavigate();
-  const { setTasks, setEvents, setTimeWindow, setBusySlots, setConnectedCalendar, busySlots } = usePlanStore();
+  const { setTasks, setEvents, setTimeWindow, setBusySlots, setConnectedCalendar, setConflicts, busySlots } = usePlanStore();
   
   const [planText, setPlanText] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -55,13 +55,14 @@ const PlanInput = () => {
       };
       
       console.log('Scheduling with busy slots:', busySlots.length);
-      const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow, busySlots);
+      const { events: scheduledEvents, conflicts } = scheduleTasksExpanded(tasks, timeWindow, busySlots);
       
       setTasks(tasks);
       setEvents(scheduledEvents);
       setTimeWindow(timeWindow);
+      setConflicts(conflicts);
       
-      toast.success(`Parsed ${tasks.length} tasks, scheduled ${scheduledEvents.length} events`);
+      toast.success(`Parsed ${tasks.length} tasks, scheduled ${scheduledEvents.length} events${conflicts.length > 0 ? ` (${conflicts.length} conflicts)` : ''}`);
       navigate('/calendar');
     } catch (error) {
       toast.dismiss(toastId);
@@ -84,13 +85,14 @@ const PlanInput = () => {
           timezone,
         };
         
-        const scheduledEvents = scheduleTasksExpanded(tasks, timeWindow, busySlots);
+        const { events: scheduledEvents, conflicts } = scheduleTasksExpanded(tasks, timeWindow, busySlots);
         
         setTasks(tasks);
         setEvents(scheduledEvents);
         setTimeWindow(timeWindow);
+        setConflicts(conflicts);
         
-        toast.success(`Parsed ${tasks.length} tasks locally`);
+        toast.success(`Parsed ${tasks.length} tasks locally${conflicts.length > 0 ? ` (${conflicts.length} conflicts)` : ''}`);
         navigate('/calendar');
       } catch (fallbackError) {
         toast.error('Failed to parse plan even with local parser.');

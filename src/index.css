@@ -80,7 +80,7 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  /* Busy slot styling */
+  /* Busy slot styling - enhanced visibility */
   .busy-slot {
     opacity: 0.7;
     font-style: italic;
@@ -88,6 +88,38 @@ All colors MUST be HSL.
   
   .busy-slot .fc-event-title {
     font-size: 0.75rem;
+  }
+
+  .busy-slot-highlight {
+    border-left: 4px solid hsl(220 9% 46%) !important;
+    font-weight: 600;
+    opacity: 0.85;
+  }
+
+  /* Work hours highlighting */
+  .fc .fc-non-business {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.02),
+      rgba(0, 0, 0, 0.02) 10px,
+      rgba(0, 0, 0, 0.04) 10px,
+      rgba(0, 0, 0, 0.04) 20px
+    );
+  }
+
+  .dark .fc .fc-non-business {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.02) 10px,
+      rgba(255, 255, 255, 0.04) 10px,
+      rgba(255, 255, 255, 0.04) 20px
+    );
+  }
+
+  /* Business hours (work hours) get subtle highlight */
+  .fc .fc-timegrid-col.fc-day {
+    transition: background-color 0.2s ease;
   }
 
   .dark {

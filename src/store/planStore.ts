@@ -14,12 +14,14 @@ interface PlanStore {
   timeWindow: TimeWindow | null;
   busySlots: TimeSlot[];
   connectedCalendar: ConnectedCalendar | null;
+  conflicts: Array<{ taskTitle: string; reason: string; suggestedTime?: string }>;
   
   setTasks: (tasks: Task[]) => void;
   setEvents: (events: ScheduledEvent[]) => void;
   setTimeWindow: (window: TimeWindow) => void;
   setBusySlots: (slots: TimeSlot[]) => void;
   setConnectedCalendar: (calendar: ConnectedCalendar | null) => void;
+  setConflicts: (conflicts: Array<{ taskTitle: string; reason: string; suggestedTime?: string }>) => void;
   updateEvent: (id: string, updates: Partial<ScheduledEvent>) => void;
   removeEvent: (id: string) => void;
   reset: () => void;
@@ -31,12 +33,14 @@ export const usePlanStore = create<PlanStore>((set) => ({
   timeWindow: null,
   busySlots: [],
   connectedCalendar: null,
+  conflicts: [],
   
   setTasks: (tasks) => set({ tasks }),
   setEvents: (events) => set({ events }),
   setTimeWindow: (timeWindow) => set({ timeWindow }),
   setBusySlots: (busySlots) => set({ busySlots }),
   setConnectedCalendar: (connectedCalendar) => set({ connectedCalendar }),
+  setConflicts: (conflicts) => set({ conflicts }),
   
   updateEvent: (id, updates) =>
     set((state) => ({
@@ -50,5 +54,5 @@ export const usePlanStore = create<PlanStore>((set) => ({
       events: state.events.filter((event) => event.id !== id),
     })),
   
-  reset: () => set({ tasks: [], events: [], timeWindow: null, busySlots: [], connectedCalendar: null }),
+  reset: () => set({ tasks: [], events: [], timeWindow: null, busySlots: [], connectedCalendar: null, conflicts: [] }),
 }));
