@@ -51,7 +51,12 @@ const PlanInput = () => {
   };
 
   const handleGoalTasksGenerated = (tasks: Task[]) => {
+    if (!startDate || !endDate) {
+      toast.error('Please select start and end dates to schedule tasks');
+      return false;
+    }
     scheduleAndNavigate(tasks);
+    return true;
   };
   
   const handleParse = async () => {

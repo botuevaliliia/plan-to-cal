@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Task } from '@/types/task';
 
 interface GoalBasedPlannerProps {
-  onTasksGenerated: (tasks: Task[]) => void;
+  onTasksGenerated: (tasks: Task[]) => boolean | Promise<boolean>;
 }
 
 interface SuggestedTask {
@@ -108,15 +108,17 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
         priority: t.priority
       }));
 
-      onTasksGenerated(detailedTasks);
+      const success = await Promise.resolve(onTasksGenerated(detailedTasks));
       
-      // Reset
-      setStage('input');
-      setGoal('');
-      setSuggestions([]);
-      setApproved(new Set());
-      
-      toast({ title: 'Tasks added!', description: `${detailedTasks.length} tasks with detailed instructions added to your plan` });
+      if (success) {
+        // Reset
+        setStage('input');
+        setGoal('');
+        setSuggestions([]);
+        setApproved(new Set());
+        
+        toast({ title: 'Tasks added!', description: `${detailedTasks.length} tasks with detailed instructions added to your plan` });
+      }
     } catch (error: any) {
       console.error('Error generating details:', error);
       toast({ 
