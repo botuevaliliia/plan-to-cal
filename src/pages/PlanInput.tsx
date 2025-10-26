@@ -105,18 +105,15 @@ const PlanInput = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-6xl mx-auto space-y-12">
         {/* Header */}
-        <div className="text-center space-y-3 pt-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mb-4">
-            <Calendar className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <div className="text-center space-y-6 pt-16">
+          <h1 className="text-6xl md:text-7xl font-mono tracking-tight uppercase">
             Plan to Calendar
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Paste your plan, set your time window, and let AI schedule it perfectly
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-light">
+            Turn your goals into scheduled tasks
           </p>
         </div>
 
@@ -124,13 +121,13 @@ const PlanInput = () => {
         <GoalBasedPlanner onTasksGenerated={handleGoalTasksGenerated} />
 
         {/* Main Card */}
-        <Card className="shadow-lg border-0 bg-card/50 backdrop-blur">
+        <Card className="border border-border/50 bg-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              Or Enter Tasks Manually
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="w-5 h-5" />
+              Enter Tasks Manually
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               Enter tasks (one per line) with optional durations. Example: "Python tutorial (2h)"
             </CardDescription>
           </CardHeader>
@@ -228,7 +225,7 @@ const PlanInput = () => {
             <Button
               onClick={handleParse}
               size="lg"
-              className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+              className="w-full"
             >
               <Sparkles className="w-5 h-5 mr-2" />
               Parse & Schedule
@@ -237,9 +234,9 @@ const PlanInput = () => {
         </Card>
 
         {/* Example */}
-        <Card className="border-dashed">
+        <Card className="border border-border/30 bg-card/50">
           <CardHeader>
-            <CardTitle className="text-sm">Example Formats</CardTitle>
+            <CardTitle className="text-sm uppercase tracking-wider">Example Formats</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>

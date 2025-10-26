@@ -16,9 +16,9 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
   const scheduledTaskIds = new Set(events.map(e => e.id));
   
   return (
-    <Card className="h-fit sticky top-24 shadow-lg border-0 bg-card/50 backdrop-blur">
+    <Card className="h-fit sticky top-24 border border-border/50 bg-card">
       <CardHeader>
-        <CardTitle className="text-sm font-semibold">Tasks</CardTitle>
+        <CardTitle className="text-sm font-semibold uppercase tracking-wider">Tasks</CardTitle>
       </CardHeader>
       <CardContent id="external-tasks" className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
         {tasks.map((task) => {
@@ -32,7 +32,7 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
               onClick={() => event && onSelectEvent(task.id)}
               className={cn(
                 "p-3 rounded-lg border transition-all cursor-grab hover:shadow-md fc-task select-none",
-                isSelected ? "bg-accent border-accent-foreground/20 shadow-md" : "bg-background border-border",
+                isSelected ? "bg-accent border-foreground/20 shadow-md" : "bg-background border-border/50",
                 !isScheduled && "opacity-60"
               )}
               data-task-id={task.id}
@@ -44,7 +44,7 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
               <div className="flex items-start gap-2">
                 <div className="mt-0.5">
                   {isScheduled ? (
-                    <CheckCircle2 className="w-4 h-4 text-primary" />
+                    <CheckCircle2 className="w-4 h-4" />
                   ) : (
                     <Circle className="w-4 h-4 text-muted-foreground" />
                   )}

@@ -239,9 +239,9 @@ const CalendarView = () => {
   ];
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card/50 backdrop-blur sticky top-0 z-10">
+      <div className="border-b border-border/50 bg-card sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -254,11 +254,9 @@ const CalendarView = () => {
                 Back
               </Button>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-primary-foreground" />
-                </div>
+                <Calendar className="w-6 h-6" />
                 <div>
-                  <h1 className="text-xl font-bold">Your Schedule</h1>
+                  <h1 className="text-xl font-mono uppercase tracking-tight">Your Schedule</h1>
                   <p className="text-sm text-muted-foreground">
                     {events.length} events scheduled
                     {connectedCalendar && ` • ${busySlots.length} busy slots from ${connectedCalendar.name}`}
@@ -318,7 +316,7 @@ const CalendarView = () => {
               />
             )}
             
-            <Card className="p-6 shadow-lg border-0 bg-card/50 backdrop-blur">
+            <Card className="p-6 border border-border/50 bg-card">
               <FullCalendar
                 ref={calendarRef}
                 plugins={[timeGridPlugin, interactionPlugin, rrulePlugin]}

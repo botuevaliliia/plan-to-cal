@@ -99,13 +99,13 @@ export const CalendarConnect = ({ onBusySlotsLoaded, onCalendarConnected, timeWi
   };
 
   return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur">
+    <Card className="border border-border/50 bg-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider">
           <Calendar className="w-5 h-5" />
           Connect Calendar
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-muted-foreground">
           Import existing events to schedule tasks around them
         </CardDescription>
       </CardHeader>

@@ -61,13 +61,13 @@ export const TimeWindowEditor = ({ timeWindow, onUpdate, onReschedule }: TimeWin
   };
 
   return (
-    <Card className="border-primary/20">
+    <Card className="border border-border/50 bg-card">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
+        <CardTitle className="text-sm flex items-center gap-2 uppercase tracking-wider">
           <Calendar className="w-4 h-4" />
           Adjust Schedule Window
         </CardTitle>
-        <CardDescription className="text-xs">
+        <CardDescription className="text-xs text-muted-foreground">
           Modify dates or work hours to resolve conflicts
         </CardDescription>
       </CardHeader>

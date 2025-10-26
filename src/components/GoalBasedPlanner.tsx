@@ -144,24 +144,24 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
 
   if (stage === 'suggestions') {
     return (
-      <Card className="border-primary/20">
+      <Card className="border border-border/50 bg-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Sparkles className="h-5 w-5" />
             Review Suggestions
           </CardTitle>
-          <CardDescription>Goal: {goal}</CardDescription>
+          <CardDescription className="text-muted-foreground">Goal: {goal}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {suggestions.map((task, i) => (
             <Card 
               key={i}
-              className={`cursor-pointer transition-colors ${approved.has(i) ? 'border-primary bg-primary/5' : 'border-muted'}`}
+              className={`cursor-pointer transition-all border ${approved.has(i) ? 'border-foreground/50 bg-accent' : 'border-border/30 hover:border-border/60'}`}
               onClick={() => toggleApproval(i)}
             >
               <CardContent className="p-4 flex items-start gap-3">
-                <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${approved.has(i) ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                  {approved.has(i) && <Check className="h-3 w-3 text-primary-foreground" />}
+                <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${approved.has(i) ? 'border-foreground bg-foreground' : 'border-muted-foreground'}`}>
+                  {approved.has(i) && <Check className="h-3 w-3 text-background" />}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -213,13 +213,13 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
   }
 
   return (
-    <Card className="border-primary/20">
+    <Card className="border border-border/50 bg-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <Sparkles className="h-5 w-5" />
           Goal-Based Planner
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-muted-foreground">
           Tell us what you want to learn, achieve, or explore, and we'll suggest a progressive plan with detailed instructions
         </CardDescription>
       </CardHeader>

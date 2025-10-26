@@ -28,8 +28,8 @@ export const ConflictWarnings = ({
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 border-destructive/50 bg-destructive/5">
-        <Alert variant="destructive" className="border-0">
+      <Card className="p-4 border border-destructive/50 bg-card">
+        <Alert variant="destructive" className="border-0 bg-transparent">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle className="mb-2">
             {conflicts.length} Task{conflicts.length > 1 ? 's' : ''} Could Not Be Scheduled
