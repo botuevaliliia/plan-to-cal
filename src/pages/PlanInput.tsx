@@ -233,33 +233,6 @@ const PlanInput = () => {
           </CardContent>
         </Card>
 
-        {/* Example */}
-        <Card className="border border-border/30 bg-card/50">
-          <CardHeader>
-            <CardTitle className="text-sm uppercase tracking-wider">Example Formats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2">Task List:</p>
-              <pre className="text-xs font-mono text-muted-foreground">
-{`Take a YC course 2h
-Do market research and presentation 3h
-Build MVP
-Go for a run 45min
-Mock interview 1h`}
-              </pre>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2">Goal-Based:</p>
-              <pre className="text-xs font-mono text-muted-foreground">
-{`I'm training for a half marathon. I can currently run 13km at 10-11 km/h. 
-I have 3 months. Please give me a progressive running schedule.
-
-I want to read 10 books in 3 months, schedule reading sessions for me.`}
-              </pre>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
