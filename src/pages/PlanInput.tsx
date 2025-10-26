@@ -12,6 +12,8 @@ import { Calendar, Clock, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { CalendarConnect } from '@/components/CalendarConnect';
 import { DateTime } from 'luxon';
+import GoalBasedPlanner from '@/components/GoalBasedPlanner';
+import { Task } from '@/types/task';
 
 const PlanInput = () => {
   const navigate = useNavigate();
@@ -23,6 +25,34 @@ const PlanInput = () => {
   const [workStart, setWorkStart] = useState('09:00');
   const [workEnd, setWorkEnd] = useState('19:00');
   const [timezone] = useState('America/New_York');
+  
+  const scheduleAndNavigate = (tasksToSchedule: Task[]) => {
+    if (!startDate || !endDate) {
+      toast.error('Please select start and end dates first');
+      return;
+    }
+
+    const timeWindow = {
+      startISO: DateTime.fromISO(startDate).startOf('day').toISO() || '',
+      endISO: DateTime.fromISO(endDate).endOf('day').toISO() || '',
+      workHours: { start: workStart, end: workEnd },
+      timezone,
+    };
+    
+    setTimeWindow(timeWindow);
+    setTasks(tasksToSchedule);
+
+    const { events, conflicts } = scheduleTasksExpanded(tasksToSchedule, timeWindow, busySlots);
+    setEvents(events);
+    setConflicts(conflicts);
+
+    toast.success(`${events.length} events scheduled${conflicts.length > 0 ? `, ${conflicts.length} conflicts found` : ''}`);
+    navigate('/calendar');
+  };
+
+  const handleGoalTasksGenerated = (tasks: Task[]) => {
+    scheduleAndNavigate(tasks);
+  };
   
   const handleParse = async () => {
     if (!planText.trim()) {
@@ -47,23 +77,7 @@ const PlanInput = () => {
         return;
       }
       
-      const timeWindow = {
-        startISO: DateTime.fromISO(startDate).startOf('day').toISO() || '',
-        endISO: DateTime.fromISO(endDate).endOf('day').toISO() || '',
-        workHours: { start: workStart, end: workEnd },
-        timezone,
-      };
-      
-      console.log('Scheduling with busy slots:', busySlots.length);
-      const { events: scheduledEvents, conflicts } = scheduleTasksExpanded(tasks, timeWindow, busySlots);
-      
-      setTasks(tasks);
-      setEvents(scheduledEvents);
-      setTimeWindow(timeWindow);
-      setConflicts(conflicts);
-      
-      toast.success(`Parsed ${tasks.length} tasks, scheduled ${scheduledEvents.length} events${conflicts.length > 0 ? ` (${conflicts.length} conflicts)` : ''}`);
-      navigate('/calendar');
+      scheduleAndNavigate(tasks);
     } catch (error) {
       toast.dismiss(toastId);
       console.error('Parse error:', error);
@@ -78,22 +92,7 @@ const PlanInput = () => {
           return;
         }
         
-        const timeWindow = {
-          startISO: DateTime.fromISO(startDate).startOf('day').toISO() || '',
-          endISO: DateTime.fromISO(endDate).endOf('day').toISO() || '',
-          workHours: { start: workStart, end: workEnd },
-          timezone,
-        };
-        
-        const { events: scheduledEvents, conflicts } = scheduleTasksExpanded(tasks, timeWindow, busySlots);
-        
-        setTasks(tasks);
-        setEvents(scheduledEvents);
-        setTimeWindow(timeWindow);
-        setConflicts(conflicts);
-        
-        toast.success(`Parsed ${tasks.length} tasks locally${conflicts.length > 0 ? ` (${conflicts.length} conflicts)` : ''}`);
-        navigate('/calendar');
+        scheduleAndNavigate(tasks);
       } catch (fallbackError) {
         toast.error('Failed to parse plan even with local parser.');
       }
@@ -116,15 +115,18 @@ const PlanInput = () => {
           </p>
         </div>
 
+        {/* Goal-Based Planner */}
+        <GoalBasedPlanner onTasksGenerated={handleGoalTasksGenerated} />
+
         {/* Main Card */}
         <Card className="shadow-lg border-0 bg-card/50 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              Your Plan or Goal
+              Or Enter Tasks Manually
             </CardTitle>
             <CardDescription>
-              Enter tasks (one per line) OR describe a goal (like "train for half marathon in 3 months", "read 10 books by summer")
+              Enter tasks (one per line) with optional durations. Example: "Python tutorial (2h)"
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
