@@ -85,13 +85,24 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
     try {
       const approvedTasks = suggestions.filter((_, i) => approved.has(i));
       
+      // Send only essential task info to reduce payload size
+      const tasksSummary = approvedTasks.map(t => ({
+        title: t.title,
+        category: t.category,
+        estimatedMinutes: t.estimatedMinutes,
+        priority: t.priority
+      }));
+      
+      console.log(`Generating details for ${tasksSummary.length} tasks...`);
+      
       const { data, error } = await supabase.functions.invoke('suggest-goal-tasks', {
-        body: { goal, type: 'detail', tasks: approvedTasks }
+        body: { goal, type: 'detail', tasks: tasksSummary }
       });
 
       if (error) {
         console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to invoke function');
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw new Error(error.message || 'Failed to generate detailed instructions');
       }
 
       if (!data || !data.tasks) {
@@ -186,7 +197,7 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating Details...
+                  Generating Details for {approved.size} Task{approved.size !== 1 ? 's' : ''}...
                 </>
               ) : (
                 <>
