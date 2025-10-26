@@ -40,15 +40,26 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
         body: { goal, type: 'suggest' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to invoke function');
+      }
+
+      if (!data || !data.tasks) {
+        throw new Error('Invalid response from function');
+      }
 
       setSuggestions(data.tasks);
       setStage('suggestions');
       setApproved(new Set());
       toast({ title: 'Suggestions generated!', description: 'Review and approve tasks you want to add' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating suggestions:', error);
-      toast({ title: 'Failed to generate suggestions', description: error.message, variant: 'destructive' });
+      toast({ 
+        title: 'Failed to generate suggestions', 
+        description: error?.message || 'Unknown error occurred', 
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }
@@ -78,7 +89,14 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
         body: { goal, type: 'detail', tasks: approvedTasks }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to invoke function');
+      }
+
+      if (!data || !data.tasks) {
+        throw new Error('Invalid response from function');
+      }
 
       const detailedTasks: Task[] = data.tasks.map((t: SuggestedTask, i: number) => ({
         id: `goal-${Date.now()}-${i}`,
@@ -99,9 +117,13 @@ export default function GoalBasedPlanner({ onTasksGenerated }: GoalBasedPlannerP
       setApproved(new Set());
       
       toast({ title: 'Tasks added!', description: `${detailedTasks.length} tasks with detailed instructions added to your plan` });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating details:', error);
-      toast({ title: 'Failed to generate details', description: error.message, variant: 'destructive' });
+      toast({ 
+        title: 'Failed to generate details', 
+        description: error?.message || 'Unknown error occurred', 
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }

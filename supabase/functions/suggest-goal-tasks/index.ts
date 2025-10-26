@@ -12,11 +12,19 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Request received:', req.method);
     const { goal, type, tasks } = await req.json();
+    console.log('Request body:', { goal, type, tasksCount: tasks?.length });
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY not configured');
       throw new Error('LOVABLE_API_KEY not configured');
+    }
+    
+    if (!goal || !type) {
+      throw new Error('Missing required fields: goal and type');
     }
 
     let systemPrompt = '';
@@ -126,6 +134,7 @@ Return detailed tasks as a flat JSON array with this structure:
       body.tool_choice = { type: "function", function: { name: "detail_tasks" } };
     }
 
+    console.log('Calling Lovable AI with model: google/gemini-2.5-flash');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -138,10 +147,11 @@ Return detailed tasks as a flat JSON array with this structure:
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Lovable AI error:', response.status, errorText);
-      throw new Error(`AI request failed: ${response.status}`);
+      throw new Error(`AI request failed: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('AI response received, processing...');
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     
     if (!toolCall) {
@@ -150,15 +160,18 @@ Return detailed tasks as a flat JSON array with this structure:
 
     const result = JSON.parse(toolCall.function.arguments);
     const finalTasks = type === 'suggest' ? result.suggestions : result.tasks;
-
+    
+    console.log('Returning tasks:', finalTasks.length);
     return new Response(JSON.stringify({ tasks: finalTasks }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in suggest-goal-tasks:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error details:', errorMessage);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: errorMessage }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
