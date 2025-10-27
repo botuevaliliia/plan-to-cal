@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,11 @@ export default function Chat() {
   const { user } = useAuth();
   const { setEvents, setConflicts, busySlots, setBusySlots, setConnectedCalendar } = usePlanStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    loadWeblinks();
+    loadSavedEvents();
+  }, []);
 
   const loadSavedEvents = async () => {
     const { data, error } = await supabase
