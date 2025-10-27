@@ -23,21 +23,22 @@ export const CalendarConnect = ({ onBusySlotsLoaded, onCalendarConnected, timeWi
       return;
     }
 
-    if (!timeWindow) {
-      toast.error('Please set a time window first');
-      return;
-    }
-
     setLoading(true);
     try {
-      console.log('Fetching calendar events...', { url: icsUrl, timeWindow });
+      // Use provided timeWindow or default to next 3 months
+      const now = new Date();
+      const threeMonthsLater = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+      const startISO = timeWindow?.startISO || now.toISOString();
+      const endISO = timeWindow?.endISO || threeMonthsLater.toISOString();
+      
+      console.log('Fetching calendar events...', { url: icsUrl, startISO, endISO });
       
       const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
         body: {
           type: 'ics',
           url: icsUrl,
-          timeMin: timeWindow.startISO,
-          timeMax: timeWindow.endISO,
+          timeMin: startISO,
+          timeMax: endISO,
         },
       });
 
@@ -73,11 +74,6 @@ export const CalendarConnect = ({ onBusySlotsLoaded, onCalendarConnected, timeWi
   };
 
   const handleGoogleConnect = async () => {
-    if (!timeWindow) {
-      toast.error('Please set a time window first');
-      return;
-    }
-
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
