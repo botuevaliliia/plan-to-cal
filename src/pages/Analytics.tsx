@@ -37,7 +37,7 @@ const Analytics = () => {
 
   useEffect(() => {
     if (events.length === 0) {
-      navigate('/');
+      navigate('/chat');
       return;
     }
 

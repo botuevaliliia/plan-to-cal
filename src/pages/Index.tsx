@@ -10,7 +10,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate("/calendar");
+      navigate("/chat");
     }
   }, [user, loading, navigate]);
 

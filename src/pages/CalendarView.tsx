@@ -43,11 +43,6 @@ const CalendarView = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const draggableInitRef = useRef(false);
   
-  useEffect(() => {
-    if (tasks.length === 0) {
-      navigate('/');
-    }
-  }, [tasks, navigate]);
   // Initialize external drag for tasks
   useEffect(() => {
     if (draggableInitRef.current) return;
