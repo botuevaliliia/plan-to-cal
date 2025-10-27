@@ -36,6 +36,8 @@ const CalendarView = () => {
     setConflicts,
     setBusySlots,
     setConnectedCalendar,
+    setTasks,
+    removeEvent,
   } = usePlanStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const draggableInitRef = useRef(false);
@@ -171,6 +173,12 @@ const CalendarView = () => {
     }
   };
 
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(tasks.filter(t => t.id !== taskId));
+    removeEvent(taskId);
+    toast.success('Task deleted');
+  };
+
   const handleReschedule = () => {
     if (!timeWindow) {
       toast.error('No time window set');
@@ -192,6 +200,13 @@ const CalendarView = () => {
     } catch (error) {
       console.error('Reschedule error:', error);
       toast.error('Failed to reschedule tasks');
+    }
+  };
+
+  const handleDateClick = (arg: any) => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi) {
+      calendarApi.changeView('timeGridWeek', arg.dateStr);
     }
   };
   
@@ -289,6 +304,7 @@ const CalendarView = () => {
               events={events}
               selectedEventId={selectedEventId}
               onSelectEvent={setSelectedEventId}
+              onDeleteTask={handleDeleteTask}
             />
 
             {/* Connect Calendar (ICS) */}
@@ -338,6 +354,7 @@ const CalendarView = () => {
                 eventResize={handleEventResize}
                 eventReceive={handleEventReceive}
                 eventClick={(info) => setSelectedEventId(info.event.id)}
+                dateClick={handleDateClick}
                 height="auto"
                 nowIndicator={true}
                 slotDuration="00:30:00"

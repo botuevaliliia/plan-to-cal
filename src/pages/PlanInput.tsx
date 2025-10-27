@@ -5,11 +5,13 @@ import { usePlanStore } from '@/store/planStore';
 import { toast } from 'sonner';
 import { DateTime } from 'luxon';
 import GoalBasedPlanner from '@/components/GoalBasedPlanner';
+import { CalendarConnect } from '@/components/CalendarConnect';
 import { Task } from '@/types/task';
+import { Card } from '@/components/ui/card';
 
 const PlanInput = () => {
   const navigate = useNavigate();
-  const { setTasks, setEvents, setTimeWindow, setConflicts, busySlots } = usePlanStore();
+  const { setTasks, setEvents, setTimeWindow, setConflicts, busySlots, setBusySlots, setConnectedCalendar } = usePlanStore();
   
   const [timezone] = useState('America/New_York');
   
@@ -69,6 +71,21 @@ const PlanInput = () => {
             AI-powered scheduling that understands your goals
           </p>
         </div>
+
+        {/* Calendar Import */}
+        <Card className="p-6 max-w-2xl mx-auto border border-border/50">
+          <CalendarConnect
+            onBusySlotsLoaded={(slots) => {
+              setBusySlots(slots);
+              toast.success(`Imported ${slots.length} events from your calendar`);
+            }}
+            onCalendarConnected={(calendar) => {
+              setConnectedCalendar(calendar);
+              toast.info(`Connected to ${calendar.name}`);
+            }}
+            timeWindow={null}
+          />
+        </Card>
 
         {/* Goal-Based Planner */}
         <GoalBasedPlanner onTasksGenerated={handleGoalTasksGenerated} />

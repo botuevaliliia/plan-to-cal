@@ -1,8 +1,9 @@
 import { Task, ScheduledEvent } from '@/types/task';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { categoryColorClasses } from '@/utils/categoryColors';
-import { Clock, CheckCircle2, Circle } from 'lucide-react';
+import { Clock, CheckCircle2, Circle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TaskListProps {
@@ -10,9 +11,10 @@ interface TaskListProps {
   events: ScheduledEvent[];
   selectedEventId: string | null;
   onSelectEvent: (id: string) => void;
+  onDeleteTask?: (id: string) => void;
 }
 
-export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: TaskListProps) => {
+export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent, onDeleteTask }: TaskListProps) => {
   const scheduledTaskIds = new Set(events.map(e => e.id));
   
   return (
@@ -29,9 +31,8 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
           return (
             <div
               key={task.id}
-              onClick={() => event && onSelectEvent(task.id)}
               className={cn(
-                "p-3 rounded-lg border transition-all cursor-grab hover:shadow-md fc-task select-none",
+                "p-3 rounded-lg border transition-all hover:shadow-md fc-task select-none group",
                 isSelected ? "bg-accent border-foreground/20 shadow-md" : "bg-background border-border/50",
                 !isScheduled && "opacity-60"
               )}
@@ -42,14 +43,14 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
               data-notes={task.notes || ''}
             >
               <div className="flex items-start gap-2">
-                <div className="mt-0.5">
+                <div className="mt-0.5 cursor-grab" onClick={() => event && onSelectEvent(task.id)}>
                   {isScheduled ? (
                     <CheckCircle2 className="w-4 h-4" />
                   ) : (
                     <Circle className="w-4 h-4 text-muted-foreground" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 cursor-grab" onClick={() => event && onSelectEvent(task.id)}>
                   <p className="text-sm font-medium line-clamp-2 mb-1.5">
                     {task.title}
                   </p>
@@ -70,6 +71,19 @@ export const TaskList = ({ tasks, events, selectedEventId, onSelectEvent }: Task
                     </div>
                   </div>
                 </div>
+                {onDeleteTask && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteTask(task.id);
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                )}
               </div>
             </div>
           );
