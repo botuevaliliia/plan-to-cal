@@ -7,6 +7,7 @@ import { ArrowLeft, BarChart3, Loader2 } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { pipeline } from '@huggingface/transformers';
 import { toast } from 'sonner';
+import AppLayout from '@/components/AppLayout';
 
 const ANALYTICS_CATEGORIES = [
   'Work Study',
@@ -122,6 +123,7 @@ const Analytics = () => {
   const maxMinutes = Math.max(...categoryData.map(d => d.minutes), 1);
 
   return (
+    <AppLayout>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/50 bg-card sticky top-0 z-10">
@@ -234,6 +236,7 @@ const Analytics = () => {
         )}
       </div>
     </div>
+    </AppLayout>
   );
 };
 

@@ -20,6 +20,7 @@ const VALUES = [
 ];
 
 export default function Onboarding() {
+  const [username, setUsername] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,6 +48,11 @@ export default function Onboarding() {
   };
 
   const handleComplete = async () => {
+    if (!username.trim()) {
+      toast.error('Please enter a username');
+      return;
+    }
+    
     if (selectedInterests.length === 0 || selectedValues.length === 0) {
       toast.error('Please select at least one interest and one value');
       return;
@@ -57,6 +63,7 @@ export default function Onboarding() {
     const { error } = await supabase
       .from('profiles')
       .update({
+        username: username.trim(),
         interests: selectedInterests,
         values: selectedValues,
       })
@@ -67,7 +74,7 @@ export default function Onboarding() {
       console.error('Error:', error);
     } else {
       toast.success('Preferences saved!');
-      navigate('/plan-input');
+      navigate('/chat');
     }
 
     setLoading(false);
@@ -80,6 +87,24 @@ export default function Onboarding() {
           <h1 className="text-3xl font-mono uppercase tracking-tight">Welcome!</h1>
           <p className="text-muted-foreground">Let's personalize your experience</p>
         </div>
+
+        <Card className="border border-border/50 bg-card">
+          <CardHeader>
+            <CardTitle className="text-sm uppercase tracking-wider">Choose Your Username</CardTitle>
+            <CardDescription>
+              This will be visible to other users
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background"
+            />
+          </CardContent>
+        </Card>
 
         <Card className="border border-border/50 bg-card">
           <CardHeader>
@@ -129,7 +154,7 @@ export default function Onboarding() {
 
         <Button
           onClick={handleComplete}
-          disabled={loading || selectedInterests.length === 0 || selectedValues.length === 0}
+          disabled={loading || !username.trim() || selectedInterests.length === 0 || selectedValues.length === 0}
           className="w-full"
           size="lg"
         >

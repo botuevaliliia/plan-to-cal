@@ -10,7 +10,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate("/plan-input");
+      navigate("/calendar");
     }
   }, [user, loading, navigate]);
 

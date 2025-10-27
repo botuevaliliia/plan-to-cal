@@ -13,12 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { categoryColors } from '@/utils/categoryColors';
 import { generateICS, downloadICS } from '@/utils/icsExport';
-import { Calendar, Download, ArrowLeft, BarChart3 } from 'lucide-react';
+import { Calendar, Download, ArrowLeft } from 'lucide-react';
 import { TaskList } from '@/components/TaskList';
 import { ConflictWarnings } from '@/components/ConflictWarnings';
 import { CalendarConnect } from '@/components/CalendarConnect';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import AppLayout from '@/components/AppLayout';
 
 const CalendarView = () => {
   const navigate = useNavigate();
@@ -255,6 +256,7 @@ const CalendarView = () => {
   ];
   
   return (
+    <AppLayout>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/50 bg-card sticky top-0 z-10">
@@ -281,15 +283,7 @@ const CalendarView = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/analytics')}
-                disabled={events.length === 0}
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Analytics
-              </Button>
+              <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 onClick={handleExportICS}
@@ -378,6 +372,7 @@ const CalendarView = () => {
         </div>
       </div>
     </div>
+    </AppLayout>
   );
 };
 

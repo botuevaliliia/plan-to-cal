@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_weblinks: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -21,6 +45,7 @@ export type Database = {
           id: string
           interests: string[] | null
           updated_at: string | null
+          username: string | null
           values: string[] | null
         }
         Insert: {
@@ -29,6 +54,7 @@ export type Database = {
           id: string
           interests?: string[] | null
           updated_at?: string | null
+          username?: string | null
           values?: string[] | null
         }
         Update: {
@@ -37,6 +63,7 @@ export type Database = {
           id?: string
           interests?: string[] | null
           updated_at?: string | null
+          username?: string | null
           values?: string[] | null
         }
         Relationships: []
