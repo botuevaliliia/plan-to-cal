@@ -20,10 +20,13 @@ import { CalendarConnect } from '@/components/CalendarConnect';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import AppLayout from '@/components/AppLayout';
+import { EventActionsDialog } from '@/components/EventActionsDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CalendarView = () => {
   const navigate = useNavigate();
   const calendarRef = useRef<FullCalendar>(null);
+  const { user } = useAuth();
   const { 
     events, 
     tasks, 
@@ -41,6 +44,8 @@ const CalendarView = () => {
     removeEvent,
   } = usePlanStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [selectedEventForAction, setSelectedEventForAction] = useState<any>(null);
   const draggableInitRef = useRef(false);
   
   // Initialize external drag for tasks
@@ -205,6 +210,48 @@ const CalendarView = () => {
       calendarApi.changeView('timeGridWeek', arg.dateStr);
     }
   };
+
+  const handleEventClick = (info: any) => {
+    const event = events.find(e => e.id === info.event.id);
+    if (event) {
+      setSelectedEventForAction(event);
+      setActionDialogOpen(true);
+    }
+  };
+
+  const handleSaveForLater = async () => {
+    if (!selectedEventForAction || !user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('saved_events')
+        .insert({
+          user_id: user.id,
+          event_id: selectedEventForAction.id,
+          event_data: selectedEventForAction,
+        });
+
+      if (error) throw error;
+
+      // Remove from current events
+      removeEvent(selectedEventForAction.id);
+      toast.success('Event saved for later');
+      setActionDialogOpen(false);
+      setSelectedEventForAction(null);
+    } catch (error) {
+      console.error('Error saving event:', error);
+      toast.error('Failed to save event');
+    }
+  };
+
+  const handleDeleteEvent = () => {
+    if (!selectedEventForAction) return;
+
+    removeEvent(selectedEventForAction.id);
+    toast.success('Event deleted');
+    setActionDialogOpen(false);
+    setSelectedEventForAction(null);
+  };
   
   console.log('Calendar rendering with busySlots:', busySlots.length);
   
@@ -350,7 +397,7 @@ const CalendarView = () => {
                 eventDrop={handleEventDrop}
                 eventResize={handleEventResize}
                 eventReceive={handleEventReceive}
-                eventClick={(info) => setSelectedEventId(info.event.id)}
+                eventClick={handleEventClick}
                 dateClick={handleDateClick}
                 height="auto"
                 nowIndicator={true}
@@ -366,6 +413,14 @@ const CalendarView = () => {
           </div>
         </div>
       </div>
+
+      <EventActionsDialog
+        open={actionDialogOpen}
+        onOpenChange={setActionDialogOpen}
+        onSaveForLater={handleSaveForLater}
+        onDelete={handleDeleteEvent}
+        eventTitle={selectedEventForAction?.title || ''}
+      />
     </div>
     </AppLayout>
   );

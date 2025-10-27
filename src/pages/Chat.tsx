@@ -25,9 +25,57 @@ export default function Chat() {
   const [savedWeblinks, setSavedWeblinks] = useState<Array<{ id: string; name: string; url: string }>>([]);
   const [newWeblinkName, setNewWeblinkName] = useState('');
   const [newWeblinkUrl, setNewWeblinkUrl] = useState('');
+  const [editingWeblink, setEditingWeblink] = useState<{ id: string; name: string; url: string } | null>(null);
+  const [loadingWeblink, setLoadingWeblink] = useState<string | null>(null);
+  const [savedEvents, setSavedEvents] = useState<Array<{ id: string; event_data: any }>>([]);
   const { user } = useAuth();
-  const { setEvents, setConflicts, busySlots } = usePlanStore();
+  const { setEvents, setConflicts, busySlots, setBusySlots, setConnectedCalendar } = usePlanStore();
   const navigate = useNavigate();
+
+  const loadSavedEvents = async () => {
+    const { data, error } = await supabase
+      .from('saved_events')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error loading saved events:', error);
+    } else {
+      setSavedEvents(data || []);
+    }
+  };
+
+  const handleRestoreEvent = async (savedEvent: { id: string; event_data: any }) => {
+    const event = savedEvent.event_data;
+    setEvents([...usePlanStore.getState().events, event]);
+    
+    const { error } = await supabase
+      .from('saved_events')
+      .delete()
+      .eq('id', savedEvent.id);
+
+    if (error) {
+      toast.error('Failed to restore event');
+    } else {
+      toast.success('Event restored to calendar');
+      loadSavedEvents();
+      navigate('/calendar');
+    }
+  };
+
+  const handleDeleteSavedEvent = async (id: string) => {
+    const { error } = await supabase
+      .from('saved_events')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete event');
+    } else {
+      toast.success('Event permanently deleted');
+      loadSavedEvents();
+    }
+  };
 
   const loadWeblinks = async () => {
     const { data, error } = await supabase
@@ -78,6 +126,77 @@ export default function Chat() {
     } else {
       toast.success('Weblink deleted');
       loadWeblinks();
+    }
+  };
+
+  const handleEditWeblink = (weblink: { id: string; name: string; url: string }) => {
+    setEditingWeblink(weblink);
+    setNewWeblinkName(weblink.name);
+    setNewWeblinkUrl(weblink.url);
+  };
+
+  const handleUpdateWeblink = async () => {
+    if (!editingWeblink || !newWeblinkName.trim() || !newWeblinkUrl.trim()) {
+      toast.error('Please enter both name and URL');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('calendar_weblinks')
+      .update({
+        name: newWeblinkName.trim(),
+        url: newWeblinkUrl.trim(),
+      })
+      .eq('id', editingWeblink.id);
+
+    if (error) {
+      toast.error('Failed to update weblink');
+      console.error(error);
+    } else {
+      toast.success('Weblink updated!');
+      setNewWeblinkName('');
+      setNewWeblinkUrl('');
+      setEditingWeblink(null);
+      loadWeblinks();
+    }
+  };
+
+  const handleLoadWeblink = async (weblink: { id: string; name: string; url: string }) => {
+    setLoadingWeblink(weblink.id);
+    try {
+      const now = new Date();
+      const threeMonthsLater = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+      const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
+        body: {
+          type: 'ics',
+          url: weblink.url,
+          timeMin: now.toISOString(),
+          timeMax: threeMonthsLater.toISOString(),
+        },
+      });
+
+      if (error) throw error;
+
+      if (!data || !data.events) {
+        throw new Error('No events data received');
+      }
+
+      const busySlots = data.events.map((event: any) => ({
+        start: event.start,
+        end: event.end,
+        title: event.summary,
+      }));
+
+      setBusySlots(busySlots);
+      setConnectedCalendar({ type: 'ics', name: weblink.name, url: weblink.url });
+      toast.success(`Loaded ${busySlots.length} events from ${weblink.name}`);
+      navigate('/calendar');
+    } catch (error) {
+      console.error('Error loading weblink:', error);
+      toast.error('Failed to load calendar events');
+    } finally {
+      setLoadingWeblink(null);
     }
   };
 
@@ -175,11 +294,13 @@ export default function Chat() {
       <div className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
         <Tabs defaultValue="goal" onValueChange={(value) => {
           if (value === 'weblinks') loadWeblinks();
+          if (value === 'saved') loadSavedEvents();
         }}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="goal">Goal-Based</TabsTrigger>
             <TabsTrigger value="simple">Simple Task</TabsTrigger>
             <TabsTrigger value="weblinks">My Weblinks</TabsTrigger>
+            <TabsTrigger value="saved">Saved Events</TabsTrigger>
           </TabsList>
 
           <TabsContent value="goal" className="space-y-4 mt-6">
@@ -287,9 +408,23 @@ export default function Chat() {
                   />
                 </div>
 
-                <Button onClick={handleSaveWeblink} className="w-full">
-                  Save Weblink
+                <Button onClick={editingWeblink ? handleUpdateWeblink : handleSaveWeblink} className="w-full">
+                  {editingWeblink ? 'Update Weblink' : 'Save Weblink'}
                 </Button>
+
+                {editingWeblink && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEditingWeblink(null);
+                      setNewWeblinkName('');
+                      setNewWeblinkUrl('');
+                    }}
+                    className="w-full"
+                  >
+                    Cancel
+                  </Button>
+                )}
 
                 <div className="space-y-2 mt-6">
                   <h3 className="text-sm font-medium">Saved Weblinks</h3>
@@ -301,23 +436,97 @@ export default function Chat() {
                         key={link.id}
                         className="flex items-center justify-between p-3 border border-border rounded-md"
                       >
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium">{link.name}</p>
                           <p className="text-xs text-muted-foreground truncate max-w-xs">
                             {link.url}
                           </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteWeblink(link.id)}
-                        >
-                          Delete
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleLoadWeblink(link)}
+                            disabled={loadingWeblink === link.id}
+                          >
+                            {loadingWeblink === link.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              'Load'
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditWeblink(link)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteWeblink(link.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     ))
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="saved" className="space-y-4 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Saved Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {savedEvents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No saved events yet</p>
+                ) : (
+                  savedEvents.map((saved) => {
+                    const event = saved.event_data;
+                    return (
+                      <div
+                        key={saved.id}
+                        className="flex items-center justify-between p-3 border border-border rounded-md"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">{event.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(event.startISO).toLocaleString()} -{' '}
+                            {new Date(event.endISO).toLocaleString()}
+                          </p>
+                          {event.notes && (
+                            <p className="text-xs text-muted-foreground mt-1">{event.notes}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRestoreEvent(saved)}
+                          >
+                            Restore
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSavedEvent(saved.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           </TabsContent>
