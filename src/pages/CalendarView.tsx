@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { categoryColors } from '@/utils/categoryColors';
 import { generateICS, downloadICS } from '@/utils/icsExport';
-import { Calendar, Download, ArrowLeft, FileText } from 'lucide-react';
+import { Calendar, Download, ArrowLeft, BarChart3 } from 'lucide-react';
 import { TaskList } from '@/components/TaskList';
 import { ConflictWarnings } from '@/components/ConflictWarnings';
 import { CalendarConnect } from '@/components/CalendarConnect';
@@ -282,6 +282,14 @@ const CalendarView = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/analytics')}
+                disabled={events.length === 0}
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
               <Button
                 variant="outline"
                 onClick={handleExportICS}
