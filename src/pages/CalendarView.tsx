@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Draggable } from '@fullcalendar/interaction';
 import rrulePlugin from '@fullcalendar/rrule';
@@ -319,13 +320,13 @@ const CalendarView = () => {
             <Card className="p-6 border border-border/50 bg-card">
               <FullCalendar
                 ref={calendarRef}
-                plugins={[timeGridPlugin, interactionPlugin, rrulePlugin]}
-                initialView="timeGridWeek"
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, rrulePlugin]}
+                initialView="dayGridMonth"
                 initialDate={timeWindow?.startISO}
                 headerToolbar={{
                   left: 'prev,next today',
                   center: 'title',
-                  right: 'timeGridWeek,timeGridDay',
+                  right: 'dayGridMonth,timeGridWeek,timeGridDay',
                 }}
                 slotMinTime="06:00:00"
                 slotMaxTime="23:00:00"

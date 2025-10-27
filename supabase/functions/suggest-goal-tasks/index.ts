@@ -13,8 +13,8 @@ serve(async (req) => {
 
   try {
     console.log('Request received:', req.method);
-    const { goal, type, tasks } = await req.json();
-    console.log('Request body:', { goal, type, tasksCount: tasks?.length });
+    const { goal } = await req.json();
+    console.log('Request body:', { goal });
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
@@ -23,41 +23,37 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
     
-    if (!goal || !type) {
-      throw new Error('Missing required fields: goal and type');
+    if (!goal) {
+      throw new Error('Missing required field: goal');
     }
 
-    let systemPrompt = '';
-    let userPrompt = '';
+    const systemPrompt = `You are an expert goal planner that creates realistic, progressive schedules. When given a goal with a timeframe, break it down into daily actionable tasks that span the ENTIRE period.
 
-    if (type === 'suggest') {
-      systemPrompt = `You are a goal achievement advisor. When given a learning or achievement goal, suggest 3-5 actionable tasks that form a progressive learning path. Each task should be realistic and specific.
+CRITICAL RULES:
+1. Spread tasks across the ENTIRE period mentioned in the goal (e.g., "3 months" = ~90 days)
+2. Generate 20-100 tasks depending on the goal complexity and timeframe
+3. Make tasks realistic daily actions (30-180 minutes each)
+4. Be specific and actionable - include exact steps, tools, and deliverables
+5. Create progressive difficulty - start easy, build up gradually
+6. Account for rest days and realistic pacing (not every day needs tasks)
+7. For fitness/learning goals: include warm-ups, practice, review sessions
+8. For job search: include daily applications, networking, skill-building
+9. Categories: Learning, Applications, Interviews, Study, Fitness, Content, Networking, SPE, Errands
 
-Return suggestions as a flat JSON array with this structure:
+Return as a flat JSON array:
 [
   {
-    "title": "Task name",
+    "title": "Specific task title with concrete action",
+    "notes": "Detailed step-by-step instructions: what to do, which tools/resources to use, expected outcome",
     "priority": "low" | "medium" | "high",
-    "category": "Learning" | "Content" | "Networking" | "Study" | etc,
-    "estimatedMinutes": number
+    "category": "appropriate category",
+    "estimatedMinutes": realistic_duration_in_minutes,
+    "dayOffset": day_number_from_start (0 for first day, 1 for second day, etc.)
   }
 ]`;
-      userPrompt = `Goal: ${goal}\n\nSuggest 3-5 progressive tasks to achieve this goal.`;
-    } else if (type === 'detail') {
-      systemPrompt = `You are a detailed task planner. For each task, provide extremely specific, actionable step-by-step instructions that leave no room for confusion. Be concrete about what to do, what tools to use, and what the output should look like.
 
-Return detailed tasks as a flat JSON array with this structure:
-[
-  {
-    "title": "Task name",
-    "notes": "Very detailed step-by-step instructions on exactly what to do during this time block",
-    "priority": "low" | "medium" | "high",
-    "category": "Task category",
-    "estimatedMinutes": number
-  }
-]`;
-      userPrompt = `Goal: ${goal}\n\nTasks to detail:\n${JSON.stringify(tasks, null, 2)}\n\nFor each task, provide extremely specific instructions on exactly what to do, which tools to use, and what to create.`;
-    }
+    const userPrompt = `Goal: ${goal}\n\nCreate a comprehensive schedule with daily tasks spread across the entire timeframe. Be realistic about pacing and include specific instructions for each task.`;
+
 
     const body: any = {
       model: 'google/gemini-2.5-flash',
@@ -65,47 +61,12 @@ Return detailed tasks as a flat JSON array with this structure:
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-    };
-
-    if (type === 'suggest') {
-      body.tools = [
+      tools: [
         {
           type: "function",
           function: {
-            name: "suggest_tasks",
-            description: "Return 3-5 actionable task suggestions.",
-            parameters: {
-              type: "object",
-              properties: {
-                suggestions: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      priority: { type: "string", enum: ["low", "medium", "high"] },
-                      category: { type: "string" },
-                      estimatedMinutes: { type: "number" }
-                    },
-                    required: ["title", "priority", "category", "estimatedMinutes"],
-                    additionalProperties: false
-                  }
-                }
-              },
-              required: ["suggestions"],
-              additionalProperties: false
-            }
-          }
-        }
-      ];
-      body.tool_choice = { type: "function", function: { name: "suggest_tasks" } };
-    } else {
-      body.tools = [
-        {
-          type: "function",
-          function: {
-            name: "detail_tasks",
-            description: "Return detailed task instructions.",
+            name: "generate_schedule",
+            description: "Generate a complete schedule with daily tasks for the goal",
             parameters: {
               type: "object",
               properties: {
@@ -118,9 +79,10 @@ Return detailed tasks as a flat JSON array with this structure:
                       notes: { type: "string" },
                       priority: { type: "string", enum: ["low", "medium", "high"] },
                       category: { type: "string" },
-                      estimatedMinutes: { type: "number" }
+                      estimatedMinutes: { type: "number" },
+                      dayOffset: { type: "number" }
                     },
-                    required: ["title", "notes", "priority", "category", "estimatedMinutes"],
+                    required: ["title", "notes", "priority", "category", "estimatedMinutes", "dayOffset"],
                     additionalProperties: false
                   }
                 }
@@ -130,9 +92,9 @@ Return detailed tasks as a flat JSON array with this structure:
             }
           }
         }
-      ];
-      body.tool_choice = { type: "function", function: { name: "detail_tasks" } };
-    }
+      ],
+      tool_choice: { type: "function", function: { name: "generate_schedule" } }
+    };
 
     console.log('Calling Lovable AI with model: google/gemini-2.5-flash');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -159,7 +121,7 @@ Return detailed tasks as a flat JSON array with this structure:
     }
 
     const result = JSON.parse(toolCall.function.arguments);
-    const finalTasks = type === 'suggest' ? result.suggestions : result.tasks;
+    const finalTasks = result.tasks;
     
     console.log('Returning tasks:', finalTasks.length);
     return new Response(JSON.stringify({ tasks: finalTasks }), {
